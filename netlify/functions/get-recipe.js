@@ -36,8 +36,17 @@ exports.handler = async (event, context) => {
     }
 
     // Read recipes from JSON file
-    const recipesPath = path.join(__dirname, '../../recipes.json');
-    const recipesData = JSON.parse(fs.readFileSync(recipesPath, 'utf8'));
+    // In Netlify, files are in the root directory relative to the function
+    let recipesData;
+    try {
+      // Try relative to function directory (development)
+      const devPath = path.join(__dirname, '../../recipes.json');
+      recipesData = JSON.parse(fs.readFileSync(devPath, 'utf8'));
+    } catch (e) {
+      // Try from root (Netlify production)
+      const prodPath = path.join(process.cwd(), 'recipes.json');
+      recipesData = JSON.parse(fs.readFileSync(prodPath, 'utf8'));
+    }
 
     // Find recipe by ID
     const recipe = recipesData.find(r => r.id === recipeId);
