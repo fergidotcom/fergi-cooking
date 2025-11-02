@@ -37,3 +37,14 @@ node_modules/
 # Temporary files
 *.tmp
 tmp/
+
+# Large media files (already in git, but exclude from future commits)
+*.mp4
+*.mov
+*.avi
+
+# Recipe source files (keep local, already committed)
+# Uncomment these to prevent future PDF/image commits:
+# *.pdf
+# *.pages
+# Janet Mason/*.JPG
