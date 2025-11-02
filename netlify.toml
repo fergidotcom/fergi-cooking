@@ -1,0 +1,48 @@
+# Netlify configuration for Fergi Cooking App
+
+[build]
+  # No build step needed - static site with serverless functions
+  publish = "."
+  functions = "netlify/functions"
+
+# Redirect API calls to Netlify Functions
+[[redirects]]
+  from = "/api/recipes/:id"
+  to = "/.netlify/functions/get-recipe/:id"
+  status = 200
+
+[[redirects]]
+  from = "/api/recipes"
+  to = "/.netlify/functions/get-recipes"
+  status = 200
+
+[[redirects]]
+  from = "/api/statistics"
+  to = "/.netlify/functions/statistics"
+  status = 200
+
+[[redirects]]
+  from = "/api/search"
+  to = "/.netlify/functions/get-recipes"
+  status = 200
+
+# SPA fallback - serve index.html for all other routes
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Headers for CORS
+[[headers]]
+  for = "/api/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer-when-downgrade"

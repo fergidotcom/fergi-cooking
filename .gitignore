@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+*.egg-info/
+dist/
+build/
+
+# Database (keep in Dropbox, not in git)
+recipes.db
+recipes.db-journal
+
+# Mac
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Environment variables (sensitive)
+.env
+.env.local
+
+# Netlify
+.netlify/
+node_modules/
+
+# Temporary files
+*.tmp
+tmp/
