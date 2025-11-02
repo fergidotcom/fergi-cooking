@@ -5,11 +5,16 @@
   publish = "."
   functions = "netlify/functions"
 
-# Include recipes.json in function bundle
+# Functions configuration
 [functions]
-  included_files = ["recipes.json"]
+  # Note: recipes.json now loaded from Dropbox, not bundled
 
 # Redirect API calls to Netlify Functions
+[[redirects]]
+  from = "/api/dropbox-oauth"
+  to = "/.netlify/functions/dropbox-oauth"
+  status = 200
+
 [[redirects]]
   from = "/api/recipes/:id"
   to = "/.netlify/functions/get-recipe/:id"

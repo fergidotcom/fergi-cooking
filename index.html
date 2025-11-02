@@ -583,18 +583,118 @@
             cursor: pointer;
             margin-top: 0.5rem;
         }
+
+        /* Print Styles */
+        @media print {
+            /* Hide everything by default */
+            body > *,
+            header,
+            nav,
+            .container,
+            #recipeGrid,
+            #statsSection,
+            #loading {
+                display: none !important;
+            }
+
+            /* Only show the modal when printing class is active */
+            #recipeModal.printing {
+                display: block !important;
+                position: static !important;
+                background: white !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+
+            #recipeModal.printing .modal-content {
+                max-width: 100% !important;
+                width: 100% !important;
+                max-height: none !important;
+                overflow: visible !important;
+                box-shadow: none !important;
+                padding: 0.5in !important;
+                margin: 0 !important;
+                border-radius: 0 !important;
+            }
+
+            /* Hide UI elements in modal */
+            .modal-close,
+            .btn-group,
+            #dropboxStatus {
+                display: none !important;
+            }
+
+            /* Optimize recipe detail for print */
+            .recipe-detail {
+                box-shadow: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+
+            .recipe-detail-header h2 {
+                font-size: 1.5rem !important;
+                margin-bottom: 0.5rem !important;
+                color: #000 !important;
+            }
+
+            .recipe-section {
+                page-break-inside: avoid;
+                margin: 1rem 0 !important;
+            }
+
+            .recipe-section h3 {
+                font-size: 1.2rem !important;
+                color: #000 !important;
+            }
+
+            .ingredients-list li,
+            .instructions-list li {
+                page-break-inside: avoid;
+            }
+
+            .instructions-list li {
+                padding: 0.5rem 0 0.5rem 3rem !important;
+                margin-bottom: 0.5rem !important;
+            }
+
+            /* Ensure colors print correctly */
+            .recipe-detail-header {
+                border-bottom: 2px solid #000 !important;
+            }
+
+            .recipe-section h3 {
+                border-left: 3px solid #000 !important;
+            }
+
+            /* Remove backgrounds for better printing */
+            .recipe-meta,
+            .instructions-list li {
+                background: white !important;
+            }
+
+            .favorite-star {
+                color: #000 !important;
+            }
+        }
     </style>
+    <!-- Dropbox SDK -->
+    <script src="https://unpkg.com/dropbox/dist/Dropbox-sdk.min.js"></script>
 </head>
 <body>
     <header>
         <h1>Fergi's Recipe Collection</h1>
         <p>Your personal recipe database and cooking companion</p>
+        <div id="dropboxStatus" style="margin-top: 1rem; font-size: 0.9rem;">
+            <span id="authStatus">Not connected to Dropbox</span>
+            <button id="authButton" onclick="app.initiateDropboxAuth()" style="margin-left: 1rem; padding: 0.5rem 1rem; background: #0061ff; color: white; border: none; border-radius: 4px; cursor: pointer;">Connect Dropbox</button>
+        </div>
     </header>
 
     <nav>
         <button onclick="app.showAll()">All Recipes</button>
         <button onclick="app.showMainRecipes()">Main Collection</button>
         <button onclick="app.showJanetRecipes()" style="background: #9b59b6; border: 2px solid #8e44ad;">📖 Janet Mason's Cookbook</button>
+        <button onclick="app.showFavorites()" style="background: var(--success-color);">★ Favorites</button>
         <button onclick="app.showNeedsReview()" style="background: var(--warning-color);">Needs Review</button>
         <button class="secondary" onclick="app.showStatistics()">Statistics</button>
         <div class="search-container">
@@ -645,25 +745,149 @@
             apiUrl: '/api',
             recipes: [],
             currentRecipe: null,
+            dropboxClient: null,
+            dropboxAccessToken: null,
+            dropboxRefreshToken: null,
+            DROPBOX_APP_KEY: 'q4ldgkwjmhxv6w2',
+            RECIPES_PATH: '/recipes.json',  // Same app folder as Reference Refinement
 
             async init() {
-                await this.loadRecipes();
+                // Check for OAuth callback
+                const urlParams = new URLSearchParams(window.location.search);
+                const code = urlParams.get('code');
+
+                if (code) {
+                    await this.handleOAuthCallback(code);
+                    // Clean URL
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    return;
+                }
+
+                // Check for stored tokens
+                this.dropboxAccessToken = localStorage.getItem('dropbox_access_token');
+                this.dropboxRefreshToken = localStorage.getItem('dropbox_refresh_token');
+
+                if (this.dropboxAccessToken) {
+                    this.initDropboxClient(this.dropboxAccessToken);
+                    this.updateAuthStatus(true);
+                    await this.loadRecipes();
+                } else {
+                    this.updateAuthStatus(false);
+                    this.showError('Please connect to Dropbox to access your recipes');
+                }
+            },
+
+            initDropboxClient(accessToken) {
+                this.dropboxClient = new Dropbox.Dropbox({ accessToken });
+            },
+
+            updateAuthStatus(connected) {
+                const statusEl = document.getElementById('authStatus');
+                const buttonEl = document.getElementById('authButton');
+
+                if (connected) {
+                    statusEl.textContent = '✓ Connected to Dropbox';
+                    statusEl.style.color = '#27ae60';
+                    buttonEl.textContent = 'Disconnect';
+                    buttonEl.onclick = () => this.disconnectDropbox();
+                } else {
+                    statusEl.textContent = 'Not connected to Dropbox';
+                    statusEl.style.color = '#e74c3c';
+                    buttonEl.textContent = 'Connect Dropbox';
+                    buttonEl.onclick = () => this.initiateDropboxAuth();
+                }
+            },
+
+            initiateDropboxAuth() {
+                const authUrl = `https://www.dropbox.com/oauth2/authorize?client_id=${this.DROPBOX_APP_KEY}&response_type=code&redirect_uri=${encodeURIComponent(window.location.origin + window.location.pathname)}`;
+                window.location.href = authUrl;
+            },
+
+            async handleOAuthCallback(code) {
+                try {
+                    this.showLoading();
+                    const response = await fetch('/api/dropbox-oauth', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ code })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.access_token) {
+                        this.dropboxAccessToken = data.access_token;
+                        this.dropboxRefreshToken = data.refresh_token;
+                        localStorage.setItem('dropbox_access_token', data.access_token);
+                        if (data.refresh_token) {
+                            localStorage.setItem('dropbox_refresh_token', data.refresh_token);
+                        }
+                        this.initDropboxClient(data.access_token);
+                        this.updateAuthStatus(true);
+                        await this.loadRecipes();
+                    } else {
+                        throw new Error('Failed to get access token');
+                    }
+                } catch (error) {
+                    this.showError(`OAuth failed: ${error.message}`);
+                } finally {
+                    this.hideLoading();
+                }
+            },
+
+            disconnectDropbox() {
+                localStorage.removeItem('dropbox_access_token');
+                localStorage.removeItem('dropbox_refresh_token');
+                this.dropboxClient = null;
+                this.dropboxAccessToken = null;
+                this.updateAuthStatus(false);
+                this.recipes = [];
+                this.renderRecipeGrid();
             },
 
             async loadRecipes() {
                 try {
-                    this.showLoading();
-                    const response = await fetch(`${this.apiUrl}/recipes`);
-                    const data = await response.json();
-
-                    if (data.success) {
-                        this.recipes = data.recipes;
-                        this.renderRecipeGrid();
-                    } else {
-                        this.showError('Failed to load recipes');
+                    if (!this.dropboxClient) {
+                        this.showError('Not connected to Dropbox');
+                        return;
                     }
+
+                    this.showLoading();
+                    const response = await this.dropboxClient.filesDownload({ path: this.RECIPES_PATH });
+                    const blob = response.result.fileBlob;
+                    const text = await blob.text();
+                    this.recipes = JSON.parse(text);
+                    this.renderRecipeGrid();
                 } catch (error) {
-                    this.showError(`Error: ${error.message}`);
+                    if (error.status === 409) {
+                        this.showError('recipes.json not found in Dropbox. Please upload the file first.');
+                    } else {
+                        this.showError(`Failed to load recipes: ${error.message}`);
+                    }
+                } finally {
+                    this.hideLoading();
+                }
+            },
+
+            async saveRecipes() {
+                try {
+                    if (!this.dropboxClient) {
+                        throw new Error('Not connected to Dropbox');
+                    }
+
+                    this.showLoading();
+                    const jsonContent = JSON.stringify(this.recipes, null, 2);
+                    const blob = new Blob([jsonContent], { type: 'application/json' });
+
+                    await this.dropboxClient.filesUpload({
+                        path: this.RECIPES_PATH,
+                        contents: blob,
+                        mode: 'overwrite',
+                        autorename: false
+                    });
+
+                    // Silently save - only show errors, not success
+                } catch (error) {
+                    this.showError(`Failed to save recipes: ${error.message}`);
                 } finally {
                     this.hideLoading();
                 }
@@ -721,21 +945,16 @@
 
             async showRecipeDetail(recipeId) {
                 try {
-                    this.showLoading();
-                    const response = await fetch(`${this.apiUrl}/recipes/${recipeId}`);
-                    const data = await response.json();
-
-                    if (data.success) {
-                        this.currentRecipe = data.recipe;
-                        this.renderRecipeDetail(data.recipe);
+                    const recipe = this.recipes.find(r => r.id === recipeId);
+                    if (recipe) {
+                        this.currentRecipe = recipe;
+                        this.renderRecipeDetail(recipe);
                         document.getElementById('recipeModal').classList.add('active');
                     } else {
-                        this.showError('Failed to load recipe details');
+                        this.showError('Recipe not found');
                     }
                 } catch (error) {
                     this.showError(`Error: ${error.message}`);
-                } finally {
-                    this.hideLoading();
                 }
             },
 
@@ -820,6 +1039,7 @@
                         ` : ''}
 
                         <div class="btn-group">
+                            <button class="btn btn-primary" onclick="app.printRecipe(${recipe.id})">🖨️ Print Recipe</button>
                             <button class="btn btn-primary" onclick="app.editRecipe(${recipe.id})">Edit Recipe</button>
                             <button class="btn btn-danger" onclick="app.deleteRecipe(${recipe.id})">Delete Recipe</button>
                             <button class="btn btn-success" onclick="app.toggleFavorite(${recipe.id}, ${recipe.favorite ? 1 : 0})">
@@ -1055,18 +1275,16 @@
                 }
 
                 try {
-                    const response = await fetch(`${this.apiUrl}/recipes/${recipeId}`, {
-                        method: 'DELETE'
-                    });
-
-                    const data = await response.json();
-
-                    if (data.success) {
+                    // Find and remove recipe from array
+                    const index = this.recipes.findIndex(r => r.id === recipeId);
+                    if (index > -1) {
+                        this.recipes.splice(index, 1);
+                        await this.saveRecipes();
                         alert('Recipe deleted successfully!');
                         this.closeModal();
-                        await this.loadRecipes();
+                        this.renderRecipeGrid();
                     } else {
-                        alert(`Failed to delete recipe: ${data.error}`);
+                        alert('Recipe not found');
                     }
                 } catch (error) {
                     alert(`Error: ${error.message}`);
@@ -1075,43 +1293,64 @@
 
             async toggleFavorite(recipeId, currentStatus) {
                 try {
-                    const response = await fetch(`${this.apiUrl}/recipes/${recipeId}`, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            favorite: currentStatus ? 0 : 1
-                        })
-                    });
-
-                    const data = await response.json();
-
-                    if (data.success) {
+                    // Find recipe and toggle favorite
+                    const recipe = this.recipes.find(r => r.id === recipeId);
+                    if (recipe) {
+                        recipe.favorite = currentStatus ? 0 : 1;
+                        await this.saveRecipes();
                         await this.showRecipeDetail(recipeId);
-                        await this.loadRecipes();
+                    } else {
+                        alert('Recipe not found');
                     }
                 } catch (error) {
                     alert(`Error: ${error.message}`);
                 }
             },
 
-            async showStatistics() {
-                try {
-                    this.showLoading();
-                    const response = await fetch(`${this.apiUrl}/statistics`);
-                    const data = await response.json();
+            printRecipe(recipeId) {
+                // Add print-specific class to modal
+                const modal = document.getElementById('recipeModal');
+                modal.classList.add('printing');
 
-                    if (data.success) {
-                        this.renderStatistics(data.statistics);
-                        document.getElementById('statsSection').classList.remove('hidden');
-                        document.getElementById('recipeGrid').innerHTML = '';
+                // Trigger browser print dialog
+                window.print();
+
+                // Remove print class after printing
+                setTimeout(() => {
+                    modal.classList.remove('printing');
+                }, 500);
+            },
+
+            showStatistics() {
+                // Calculate statistics from local recipes
+                const stats = {
+                    total_recipes: this.recipes.length,
+                    favorites: this.recipes.filter(r => r.favorite === 1 || r.favorite === true).length,
+                    by_source: [],
+                    by_cuisine: []
+                };
+
+                // Count by source
+                const sourceCounts = {};
+                this.recipes.forEach(r => {
+                    if (r.source_attribution) {
+                        sourceCounts[r.source_attribution] = (sourceCounts[r.source_attribution] || 0) + 1;
                     }
-                } catch (error) {
-                    this.showError(`Error: ${error.message}`);
-                } finally {
-                    this.hideLoading();
-                }
+                });
+                stats.by_source = Object.entries(sourceCounts).map(([source, count]) => ({ source, count }));
+
+                // Count by cuisine
+                const cuisineCounts = {};
+                this.recipes.forEach(r => {
+                    if (r.cuisine_type) {
+                        cuisineCounts[r.cuisine_type] = (cuisineCounts[r.cuisine_type] || 0) + 1;
+                    }
+                });
+                stats.by_cuisine = Object.entries(cuisineCounts).map(([cuisine, count]) => ({ cuisine, count }));
+
+                this.renderStatistics(stats);
+                document.getElementById('statsSection').classList.remove('hidden');
+                document.getElementById('recipeGrid').innerHTML = '';
             },
 
             renderStatistics(stats) {
@@ -1167,80 +1406,99 @@
                 this.filterBySource('Janet');
             },
 
+            showFavorites() {
+                document.getElementById('statsSection').classList.add('hidden');
+                this.filterByFavorite();
+            },
+
             showNeedsReview() {
                 document.getElementById('statsSection').classList.add('hidden');
                 this.filterByNeedsReview();
             },
 
-            async filterBySource(source) {
-                try {
-                    this.showLoading();
-                    const response = await fetch(`${this.apiUrl}/recipes`);
-                    const data = await response.json();
-
-                    if (data.success) {
-                        if (source === 'main') {
-                            // Filter out Janet recipes (exclude any with "Janet" in source)
-                            this.recipes = data.recipes.filter(r =>
-                                !r.source_attribution || !r.source_attribution.includes('Janet')
-                            );
-                        } else if (source === 'Janet') {
-                            // Filter for Janet recipes (any source containing "Janet")
-                            this.recipes = data.recipes.filter(r =>
-                                r.source_attribution && r.source_attribution.includes('Janet')
-                            );
-                        } else {
-                            // Filter for specific source
-                            this.recipes = data.recipes.filter(r => r.source_attribution === source);
-                        }
-                        this.renderRecipeGrid();
-                    }
-                } catch (error) {
-                    this.showError(`Error: ${error.message}`);
-                } finally {
-                    this.hideLoading();
-                }
+            filterByFavorite() {
+                const allRecipes = [...this.recipes];
+                const filtered = allRecipes.filter(r => r.favorite === 1 || r.favorite === true);
+                const tempRecipes = this.recipes;
+                this.recipes = filtered;
+                this.renderRecipeGrid();
+                this.recipes = tempRecipes; // Restore full list
             },
 
-            async filterByNeedsReview() {
-                try {
-                    this.showLoading();
-                    const response = await fetch(`${this.apiUrl}/recipes`);
-                    const data = await response.json();
+            filterBySource(source) {
+                const allRecipes = [...this.recipes];
+                let filtered;
 
-                    if (data.success) {
-                        this.recipes = data.recipes.filter(r => r.title && r.title.includes('NEEDS TITLE'));
-                        this.renderRecipeGrid();
-                    }
-                } catch (error) {
-                    this.showError(`Error: ${error.message}`);
-                } finally {
-                    this.hideLoading();
+                if (source === 'main') {
+                    // Filter out Janet recipes (exclude any with "Janet" in source)
+                    filtered = allRecipes.filter(r =>
+                        !r.source_attribution || !r.source_attribution.includes('Janet')
+                    );
+                } else if (source === 'Janet') {
+                    // Filter for Janet recipes (any source containing "Janet")
+                    filtered = allRecipes.filter(r =>
+                        r.source_attribution && r.source_attribution.includes('Janet')
+                    );
+                } else {
+                    // Filter for specific source
+                    filtered = allRecipes.filter(r => r.source_attribution === source);
                 }
+
+                const tempRecipes = this.recipes;
+                this.recipes = filtered;
+                this.renderRecipeGrid();
+                this.recipes = tempRecipes; // Restore full list
             },
 
-            async performSearch() {
-                const query = document.getElementById('searchInput').value.trim();
+            filterByNeedsReview() {
+                const allRecipes = [...this.recipes];
+                const filtered = allRecipes.filter(r => r.title && r.title.includes('NEEDS TITLE'));
+                const tempRecipes = this.recipes;
+                this.recipes = filtered;
+                this.renderRecipeGrid();
+                this.recipes = tempRecipes; // Restore full list
+            },
+
+            performSearch() {
+                const query = document.getElementById('searchInput').value.trim().toLowerCase();
 
                 if (!query) {
-                    await this.loadRecipes();
+                    this.renderRecipeGrid();
                     return;
                 }
 
-                try {
-                    this.showLoading();
-                    const response = await fetch(`${this.apiUrl}/search?q=${encodeURIComponent(query)}`);
-                    const data = await response.json();
+                // Search in title, description, ingredients, and source
+                const allRecipes = [...this.recipes];
+                const filtered = allRecipes.filter(r => {
+                    // Search in title
+                    if (r.title && r.title.toLowerCase().includes(query)) return true;
 
-                    if (data.success) {
-                        this.recipes = data.recipes;
-                        this.renderRecipeGrid();
-                    }
-                } catch (error) {
-                    this.showError(`Error: ${error.message}`);
-                } finally {
-                    this.hideLoading();
-                }
+                    // Search in description
+                    if (r.description && r.description.toLowerCase().includes(query)) return true;
+
+                    // Search in source
+                    if (r.source_attribution && r.source_attribution.toLowerCase().includes(query)) return true;
+
+                    // Search in cuisine
+                    if (r.cuisine_type && r.cuisine_type.toLowerCase().includes(query)) return true;
+
+                    // Search in ingredients
+                    if (r.ingredients && r.ingredients.some(ing =>
+                        ing.ingredient_name && ing.ingredient_name.toLowerCase().includes(query)
+                    )) return true;
+
+                    // Search in instructions
+                    if (r.instructions && r.instructions.some(inst =>
+                        inst.instruction_text && inst.instruction_text.toLowerCase().includes(query)
+                    )) return true;
+
+                    return false;
+                });
+
+                const tempRecipes = this.recipes;
+                this.recipes = filtered;
+                this.renderRecipeGrid();
+                this.recipes = tempRecipes; // Restore full list
             },
 
             handleSearch(event) {
@@ -1269,6 +1527,10 @@
             },
 
             showError(message) {
+                alert(message);
+            },
+
+            showSuccess(message) {
                 alert(message);
             }
         };

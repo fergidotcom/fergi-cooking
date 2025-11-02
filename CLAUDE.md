@@ -8,6 +8,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with th
 
 **Project Location:** `/Users/joeferguson/Library/CloudStorage/Dropbox/Fergi/Cooking`
 **Created:** October 30, 2025
+**Status:** ✓ Production - Deployed to Netlify
+**Live URL:** https://fergi-cooking.netlify.app
 **Purpose:** Organize and manage recipe collection, create searchable recipe database, document family recipes
 
 ## Project Structure
@@ -15,10 +17,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with th
 ```
 Cooking/
 ├── CLAUDE.md                           # This file - Project documentation
+├── DEPLOYMENT.md                       # ⭐ Netlify deployment guide
+├── index.html                          # Web interface (deployed to Netlify)
+├── recipes.json                        # Recipe data for web interface
+├── recipes.db                          # SQLite database (122 recipes)
+├── netlify.toml                        # Netlify configuration
+├── netlify/functions/                  # Serverless functions
+│   ├── get-recipe.js                  # Get single recipe
+│   ├── get-recipes.js                 # Get all/search recipes
+│   └── statistics.js                  # Recipe statistics
 ├── *.pdf                               # Recipe PDFs (50+ files)
 ├── *.pages                             # Recipe documents (Pages format)
-├── Janet Mason/                        # Sub-collection of recipes
-└── (Future: Recipe database, search tools, web interface)
+└── Janet Mason/                        # Sub-collection of recipes (85 images)
 ```
 
 ## Current Contents
@@ -37,39 +47,54 @@ The project contains 50+ recipe files including:
 - Pages documents (custom recipes and modifications)
 - Recipe collections (Adrienne Cookbook, NancyBernRecipes, etc.)
 
-## Potential Features
+## Current Features (Implemented)
 
-The following are ideas for developing this project:
+### ✓ Recipe Database
+- SQLite database with 122 recipes
+- Structured schema with ingredients, instructions, tags
+- Full-text search capability
+- Recipe metadata (prep time, servings, difficulty, cuisine)
+- Recipe images and cooking logs
 
-### Recipe Database
-- Extract recipes from PDFs and Pages documents
-- Structure into searchable database (SQLite, JSON, or similar)
-- Tag recipes by category, cuisine, difficulty, prep time
-- Track favorites and modifications
+### ✓ Web Interface
+- Live at https://fergi-cooking.netlify.app
+- Browse all recipes with cards
+- Search and filter recipes
+- View recipe details with formatted ingredients and instructions
+- Janet Mason's Cookbook section
+- Recipe statistics dashboard
+- Responsive design
 
-### Recipe Search Tool
-- Full-text search across all recipes
-- Filter by ingredients, category, time
-- Find recipes using available ingredients
-- Suggest similar recipes
+### ✓ Recipe Search
+- Full-text search across recipes
+- Filter by source, cuisine, meal type
+- Search in ingredients and instructions
+- Tag-based filtering
 
-### Recipe Management
-- Convert recipes to standard format
-- Scale recipe quantities
-- Calculate nutritional information
-- Track cooking history and notes
+### ✓ Serverless Backend
+- Netlify Functions for API
+- Get all recipes endpoint
+- Get single recipe by ID
+- Recipe statistics endpoint
+- Search functionality
 
-### Web Interface
-- Browse recipe collection
-- View recipes with formatting
-- Add cooking notes and ratings
-- Share recipes with family
+### ✓ Recipe Management
+- Instructions reformatted with explicit ingredients (Nov 2, 2025)
+- Import from Janet Mason's cookbook (85 recipes extracted from images)
+- Recipe extraction from PDFs
 
-### Recipe Import/Export
-- Import from common recipe websites
-- Export to PDF, Markdown, or other formats
-- Sync with recipe apps
-- Backup recipe collection
+## Future Enhancements
+
+### Potential Features to Add:
+- Recipe scaling calculator
+- Meal planning tool
+- Grocery list generator
+- Cooking timer integration
+- User notes and ratings (currently read-only)
+- Recipe modifications tracking
+- Nutritional information calculator
+- Import from recipe websites
+- Export to PDF/Markdown
 
 ## Development Notes
 
@@ -85,44 +110,81 @@ The following are ideas for developing this project:
 - Special collections (Adrienne Cookbook, Janet Mason subfolder)
 - Recipes span multiple cuisines (American, Italian, Indian, Caribbean)
 
+## Deployment to Netlify
+
+**⭐ See DEPLOYMENT.md for complete deployment guide**
+
+### Quick Deploy Command:
+```bash
+netlify deploy --prod --dir="." --message="Your deploy message"
+```
+
+### Key Information:
+- **Live URL:** https://fergi-cooking.netlify.app
+- **Admin:** https://app.netlify.com/projects/fergi-cooking
+- **Account:** fergidotcom@gmail.com
+- **Functions:** Automatically deployed from `netlify/functions/`
+- **Data:** `recipes.json` is included in function bundle
+
+### When to Deploy:
+- After updating recipes in database (regenerate recipes.json first)
+- After UI changes to index.html
+- After function changes in netlify/functions/
+- After reformatting instructions
+
+### Testing Locally:
+```bash
+netlify dev
+# Opens at http://localhost:8888
+```
+
 ## Common Tasks
 
 ### Adding New Recipes
-1. Save recipe file to Cooking folder
-2. Use consistent naming: `[Dish Name] [Source/Variant].pdf`
-3. Update this documentation if adding new categories
+1. Add recipe to database (via SQL or import script)
+2. Regenerate recipes.json: `python3 export_to_json.py`
+3. Deploy to Netlify: `netlify deploy --prod --dir="." --message="Added new recipe"`
+4. Original files can be saved to Cooking folder for reference
 
 ### Finding Recipes
-Currently manual search through files. Future: Build search tool.
+- **Web Interface:** https://fergi-cooking.netlify.app
+- **Search:** Use search bar in web interface
+- **Database:** Query recipes.db directly with SQL
+- **Local Files:** Original PDFs/Pages docs in Cooking folder
 
-### Recipe Modifications
-For custom variants:
-1. Create new .pages document with recipe name + "Fergi" or "Joe's"
-2. Document modifications from original
-3. Export to PDF for easy sharing
+### Updating Recipe Instructions
+When you need to reformat or fix recipe instructions:
+1. Update in recipes.db database
+2. Regenerate recipes.json
+3. Deploy to Netlify
+4. See `reformat_instructions.py` for bulk updates
 
-## Future Development Ideas
+### Recipe Database Management
+```bash
+# View database schema
+sqlite3 recipes.db ".schema"
 
-**Phase 1: Organization**
-- Create recipe inventory spreadsheet/database
-- Tag all recipes with metadata
-- Identify duplicates and variants
+# Count recipes
+sqlite3 recipes.db "SELECT COUNT(*) FROM recipes;"
 
-**Phase 2: Extraction**
-- Extract recipe text from PDFs
-- Parse recipe format (ingredients, instructions)
-- Create structured recipe database
+# Search recipes
+sqlite3 recipes.db "SELECT title FROM recipes WHERE title LIKE '%beef%';"
 
-**Phase 3: Tools**
-- Build recipe search tool
-- Create web interface for browsing
-- Add recipe import/export features
+# Export to JSON
+python3 export_to_json.py
+```
 
-**Phase 4: Advanced**
-- Meal planning tool
-- Grocery list generator
-- Recipe scaling calculator
-- Cooking timer integration
+### Deploying Changes
+```bash
+# Quick deploy
+netlify deploy --prod --dir="." --message="Description"
+
+# Test locally first
+netlify dev
+
+# Check status
+netlify status
+```
 
 ## Related Projects
 
@@ -136,23 +198,41 @@ For custom variants:
 - Could include historical family recipes
 - Recipe collection is part of family heritage
 
+## Database Schema
+
+The SQLite database (`recipes.db`) includes:
+- **recipes** - Recipe metadata and details
+- **ingredients** - Recipe ingredients with quantities
+- **instructions** - Step-by-step cooking instructions
+- **tags** - Recipe tags and categories
+- **cooking_log** - Cooking history and notes
+- **recipe_images** - Recipe images
+- **recipes_fts** - Full-text search index
+
+See database schema: `sqlite3 recipes.db ".schema"`
+
+## Important Files
+
+- **DEPLOYMENT.md** - Complete Netlify deployment guide
+- **RECIPE_INSTRUCTION_REFORMATTING_SUMMARY.md** - Recent instruction updates
+- **reformat_instructions.py** - Script to reformat recipe instructions
+- **recipes.db** - SQLite database (not deployed)
+- **recipes.json** - JSON export for web interface (deployed)
+- **index.html** - Web interface (deployed to Netlify)
+
 ## Notes
 
-This project is currently in **planning/organization phase**. No code has been written yet.
+The recipe collection represents years of accumulated cooking knowledge and family traditions. The database preserves original recipe metadata while the web interface makes everything searchable and accessible.
 
-The recipe collection represents years of accumulated cooking knowledge and family traditions. Any development should preserve the original files and metadata.
-
-## Getting Started
-
-When you're ready to start development on this project:
-
-1. **Inventory:** Create list of all recipes with metadata
-2. **Choose format:** Decide on database structure (SQLite, JSON, etc.)
-3. **Extract recipes:** Build tool to parse PDFs and Pages documents
-4. **Build search:** Create search interface
-5. **Iterate:** Add features based on usage and needs
+**Development Guidelines:**
+- Always backup database before bulk updates
+- Test locally with `netlify dev` before deploying
+- Keep recipes.json in sync with recipes.db
+- Preserve original PDF/Pages files for reference
+- Document significant changes in session summaries
 
 ---
 
-**Last Updated:** October 30, 2025
-**Status:** Project initialized, awaiting development direction
+**Last Updated:** November 2, 2025
+**Status:** ✓ Production - Live at https://fergi-cooking.netlify.app
+**Database:** 122 recipes | **Web Interface:** Deployed to Netlify | **Features:** Search, Browse, Janet's Cookbook
