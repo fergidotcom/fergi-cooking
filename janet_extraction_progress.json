@@ -1,0 +1,11 @@
+{
+  "completed": [],
+  "skipped": [],
+  "errors": [
+    {
+      "filename": "IMG_8144_1.JPG",
+      "error": "NOT NULL constraint failed: ingredients.ingredient_name"
+    }
+  ],
+  "total_processed": 0
+}

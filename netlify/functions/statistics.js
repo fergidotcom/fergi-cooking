@@ -6,6 +6,32 @@
 const fs = require('fs');
 const path = require('path');
 
+// Load recipes data - try multiple paths for different environments
+let recipesData = null;
+
+function loadRecipes() {
+  if (recipesData) return recipesData;
+
+  const possiblePaths = [
+    path.join(__dirname, '../../recipes.json'),
+    path.join(process.cwd(), 'recipes.json'),
+    '/var/task/recipes.json',
+    path.join(__dirname, '../../../recipes.json'),
+  ];
+
+  for (const filepath of possiblePaths) {
+    try {
+      recipesData = JSON.parse(fs.readFileSync(filepath, 'utf8'));
+      console.log(`Loaded recipes from: ${filepath}`);
+      return recipesData;
+    } catch (e) {
+      console.log(`Failed to load from ${filepath}: ${e.message}`);
+    }
+  }
+
+  throw new Error('Could not find recipes.json in any known location');
+}
+
 exports.handler = async (event, context) => {
   // Only allow GET requests
   if (event.httpMethod !== 'GET') {
@@ -16,18 +42,8 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    // Read recipes from JSON file
-    // In Netlify, files are in the root directory relative to the function
-    let recipesData;
-    try {
-      // Try relative to function directory (development)
-      const devPath = path.join(__dirname, '../../recipes.json');
-      recipesData = JSON.parse(fs.readFileSync(devPath, 'utf8'));
-    } catch (e) {
-      // Try from root (Netlify production)
-      const prodPath = path.join(process.cwd(), 'recipes.json');
-      recipesData = JSON.parse(fs.readFileSync(prodPath, 'utf8'));
-    }
+    // Load recipes data
+    const recipesData = loadRecipes();
 
     // Calculate statistics
     const stats = {};

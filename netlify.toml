@@ -5,6 +5,10 @@
   publish = "."
   functions = "netlify/functions"
 
+# Include recipes.json in function bundle
+[functions]
+  included_files = ["recipes.json"]
+
 # Redirect API calls to Netlify Functions
 [[redirects]]
   from = "/api/recipes/:id"
