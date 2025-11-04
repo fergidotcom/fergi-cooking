@@ -1,85 +1,168 @@
-# Fergi's Recipe Collection - Database & Web Interface
+# Fergi's Recipe Collection
 
-A comprehensive recipe management system that extracts, indexes, and provides a beautiful web interface for your recipe collection.
+A comprehensive recipe management system with AI-powered import, event planning, and real-time Dropbox sync.
 
-## Features
+**Live at:** https://fergi-cooking.netlify.app
+**Version:** 3.0.0 (November 2025)
+**Database:** 122 recipes
+**Platform:** Netlify (serverless) + Dropbox (data storage)
 
-✨ **Complete Recipe Management**
-- Extract recipes from PDFs, Apple Pages documents, and images (via OCR)
-- Normalized SQLite database with full-text search
-- Beautiful, responsive web interface
-- Full CRUD operations (Create, Read, Update, Delete)
-- Edit any aspect of recipes directly in the browser
+## ✨ What's New in v3.0 (November 2025)
 
-🔍 **Smart Extraction**
-- Automatic source attribution detection
-- Recipe parsing (ingredients, instructions, times, servings)
-- Filename-based metadata extraction
-- Support for Janet Mason collection with automatic attribution
+🤖 **AI-Powered Recipe Import** - Upload PDFs, Word docs, or images, and let Claude AI format them into perfect recipes
 
-📊 **Features**
-- Search across titles, descriptions, ingredients, instructions
-- Filter by source, cuisine, meal type
-- Mark recipes as favorites
-- Rate recipes (1-5 stars)
-- Track dietary preferences (vegetarian, vegan, gluten-free, etc.)
-- View statistics dashboard
+👥 **Contributor Management** - Track who contributed each recipe, filter by contributor, see statistics
 
-## System Architecture
+📅 **Event Planning** - Create cooking events, assign recipes, collect guest preferences via public response page
 
+💾 **Dropbox Migration** - All data in Dropbox for instant updates without redeployment
+
+🎨 **Enhanced UI** - Two-column print layout, better navigation, statistics dashboard
+
+See [CHANGELOG.md](CHANGELOG.md) for complete version history.
+
+---
+
+## 🎯 Features (v3.0.0)
+
+### 🤖 AI-Powered Recipe Import
+- **4-step wizard** for guided recipe entry
+- **File upload support:** PDF, Word (.docx), Images (OCR), Plain Text
+- **AI formatting** via Claude Sonnet 4 API
+- **Text paste option** for quick entry
+- **Live preview** with edit capability
+- **Auto-save to Dropbox** (no redeployment needed)
+
+### 👥 Contributor Management
+- **Public system** (no authentication required)
+- **Add/remove contributors** with validation
+- **Filter recipes by contributor**
+- **Statistics dashboard** with contributor breakdown
+- **Auto-assignment:** 85 Janet Mason recipes, 37 Fergi recipes
+
+### 📅 Event Planning
+- **Create cooking events** with date/time/location
+- **Assign recipes** to events
+- **Guest preference collection** (public response page)
+- **Email generation** with multiple copy methods
+- **Dietary restrictions tracking**
+- **Volunteer categories** (appetizers, mains, desserts, etc.)
+
+### 🔍 Recipe Browsing & Search
+- **Full-text search** across all fields
+- **Filter by contributor, source, cuisine, meal type**
+- **Beautiful card-based grid** display
+- **Responsive design** for mobile
+- **Two-column print layout** (ingredients left, instructions right)
+- **Statistics dashboard** with counts and breakdowns
+
+### 💾 Real-Time Dropbox Sync
+- **Single source of truth:** All data in Dropbox
+- **No redeployment needed** for data updates
+- **Auto-refresh OAuth tokens**
+- **Shared data folder** with Reference Refinement app
+- **Instant updates** across all devices
+
+## 🏗️ System Architecture (v3.0)
+
+### Serverless + Dropbox Architecture
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                     Web Interface (HTML/CSS/JS)              │
-│  - Recipe browsing & search                                  │
-│  - Full editing capabilities                                 │
-│  - Statistics dashboard                                      │
-└─────────────────────────────────────────────────────────────┘
-                              ↕
-┌─────────────────────────────────────────────────────────────┐
-│                  Flask REST API (server.py)                  │
-│  - /api/recipes - List/search recipes                        │
-│  - /api/recipes/<id> - Get/update/delete recipe             │
-│  - /api/statistics - Database stats                          │
-└─────────────────────────────────────────────────────────────┘
-                              ↕
-┌─────────────────────────────────────────────────────────────┐
-│              Database Layer (database.py)                    │
-│  - SQLite database with normalized schema                   │
-│  - Full-text search support                                  │
-│  - CRUD operations                                           │
-└─────────────────────────────────────────────────────────────┘
-                              ↕
-┌─────────────────────────────────────────────────────────────┐
-│        Recipe Extraction (recipe_extractor.py)               │
-│  - PDF text extraction (PyPDF2, pdfplumber)                 │
-│  - Image OCR (Tesseract)                                     │
-│  - Pages document conversion                                 │
-│  - Recipe parsing & metadata extraction                      │
-└─────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│        Web Interface (fergi-cooking.netlify.app)             │
+│  - Static HTML/CSS/JS hosted on Netlify CDN                  │
+│  - Recipe import wizard (add-recipe.html)                    │
+│  - Event management (events.html, event-detail.html)         │
+│  - Guest responses (respond.html - public, no auth)          │
+│  - Recipe browsing (index.html)                              │
+└──────────────────────────────────────────────────────────────┘
+                              ↕ API Calls
+┌──────────────────────────────────────────────────────────────┐
+│           Netlify Functions (17 serverless APIs)             │
+│  Recipe: get-recipes, get-recipe, add-recipe, update-recipe  │
+│  Contributors: manage-contributors (CRUD)                    │
+│  Events: create-event, get-events, save-events               │
+│  Import: extract-file, format-recipe (Claude API)            │
+│  Utility: load-recipes, save-recipes, record-selection       │
+│  Helper: lib/dropbox-auth (OAuth with auto-refresh)          │
+└──────────────────────────────────────────────────────────────┘
+                              ↕ Dropbox API
+┌──────────────────────────────────────────────────────────────┐
+│         Dropbox Storage (/Apps/Reference Refinement/)        │
+│  - recipes.json (122 recipes, 548KB)                         │
+│  - contributors.json (8 contributors)                        │
+│  - events.json (cooking events)                              │
+│  - guest-selections.json (guest responses)                   │
+│  SINGLE SOURCE OF TRUTH - No redeployment needed!            │
+└──────────────────────────────────────────────────────────────┘
+                              ↕ Dropbox Sync
+┌──────────────────────────────────────────────────────────────┐
+│         Your Mac (~/Dropbox/Apps/Reference Refinement/)      │
+│  - Auto-synced local copies of all JSON files                │
+│  - recipes.db (SQLite - legacy, for local querying)          │
+└──────────────────────────────────────────────────────────────┘
+
+                    ┌─────────────────────┐
+                    │  Claude Sonnet 4 API │
+                    │  (Recipe Formatting) │
+                    └─────────────────────┘
 ```
 
-## Installation
+### Key Benefits
+✅ **Zero-downtime updates** - Data changes don't require redeployment
+✅ **Real-time sync** - All devices see changes instantly via Dropbox
+✅ **Scalable** - Netlify Functions auto-scale to demand
+✅ **Cost-effective** - Free tier covers typical usage
+✅ **Shared storage** - Same Dropbox folder as Reference Refinement app
 
-### Prerequisites
+## 🚀 Quick Start
 
+### For Users (Just Browse Recipes)
+Visit **https://fergi-cooking.netlify.app** - no installation required!
+
+### For Contributors (Add Recipes)
+1. Visit https://fergi-cooking.netlify.app
+2. Click **"+ Add Recipe"**
+3. Follow the 4-step wizard:
+   - Upload file or paste text
+   - Select contributor (or add new)
+   - Let AI format the recipe
+   - Review and save
+4. Done! Recipe appears instantly.
+
+### For Developers (Local Development)
+
+#### Prerequisites
+1. **Node.js** (for Netlify CLI)
+2. **Netlify CLI**: `npm install -g netlify-cli`
+3. **Netlify account** and site linked
+
+#### Local Development
+```bash
+# Clone repository
+cd ~/path/to/Cooking
+
+# Install dependencies (if needed)
+npm install
+
+# Start local dev server (includes functions)
+netlify dev
+# Opens at http://localhost:8888
+
+# Deploy to production
+netlify deploy --prod --dir="." --message="Your changes"
+```
+
+### For Data Management (Legacy Local Tools)
+
+The legacy Python tools are still available for batch operations:
+
+#### Prerequisites
 1. **Python 3.8+**
 2. **Tesseract OCR** (for image extraction)
 
-Install Tesseract on macOS:
 ```bash
 brew install tesseract
-```
-
-### Setup
-
-1. **Install Python dependencies:**
-```bash
 pip3 install -r requirements.txt
-```
-
-Note: If you encounter issues with some packages, you can install the essentials:
-```bash
-pip3 install flask flask-cors PyPDF2 pdfplumber Pillow pytesseract
 ```
 
 ## Usage
@@ -191,54 +274,87 @@ SQLite FTS5 virtual table for fast searching across:
 - Ingredient names
 - Instructions
 
-## API Endpoints
+## 🔌 API Endpoints (Netlify Functions)
 
-### GET /api/recipes
-List all recipes (with optional pagination)
+All endpoints are serverless functions deployed at `/.netlify/functions/{function-name}`
+
+### Recipe Management
 ```bash
-curl http://127.0.0.1:5000/api/recipes
-curl http://127.0.0.1:5000/api/recipes?limit=10&offset=0
+# Get all recipes (with optional contributor filter)
+GET /.netlify/functions/get-recipes
+GET /.netlify/functions/get-recipes?contributor=Janet%20Mason
+
+# Get single recipe
+GET /.netlify/functions/get-recipe?id=1
+
+# Add new recipe
+POST /.netlify/functions/add-recipe
+Body: { title, ingredients, instructions, contributor, ... }
+
+# Update recipe
+PUT /.netlify/functions/update-recipe?id=1
+Body: { title, ingredients, ... }
+
+# Load from Dropbox
+GET /.netlify/functions/load-recipes
+
+# Save to Dropbox
+POST /.netlify/functions/save-recipes
+Body: { recipes: [...] }
 ```
 
-### GET /api/recipes/:id
-Get single recipe with full details
+### Recipe Import (AI-Powered)
 ```bash
-curl http://127.0.0.1:5000/api/recipes/1
+# Extract text from file (PDF, Word, Image, Text)
+POST /.netlify/functions/extract-file
+Body: multipart/form-data with file
+
+# Format recipe with AI (Claude Sonnet 4)
+POST /.netlify/functions/format-recipe
+Body: { text: "raw recipe text" }
 ```
 
-### POST /api/recipes
-Create new recipe
+### Contributor Management
 ```bash
-curl -X POST http://127.0.0.1:5000/api/recipes \
-  -H "Content-Type: application/json" \
-  -d '{"title":"New Recipe","source_attribution":"Fergi",...}'
+# Get all contributors
+GET /.netlify/functions/manage-contributors
+
+# Add contributor
+POST /.netlify/functions/manage-contributors
+Body: { name: "Contributor Name" }
+
+# Remove contributor
+DELETE /.netlify/functions/manage-contributors?name=Name
 ```
 
-### PUT /api/recipes/:id
-Update recipe
+### Event Management
 ```bash
-curl -X PUT http://127.0.0.1:5000/api/recipes/1 \
-  -H "Content-Type: application/json" \
-  -d '{"title":"Updated Title",...}'
+# Get all events
+GET /.netlify/functions/get-events
+
+# Create/update event
+POST /.netlify/functions/create-event
+Body: { name, date, time, location, description, guests: [...] }
+
+# Save events to Dropbox
+POST /.netlify/functions/save-events
+Body: { events: [...] }
+
+# Manage event recipes
+POST /.netlify/functions/event-recipes
+Body: { eventId, recipeId, action: "add|remove" }
+
+# Record guest response
+POST /.netlify/functions/record-selection
+Body: { eventId, guestName, recipeId, selectionType, ... }
+
+# Generate event email
+POST /.netlify/functions/generate-email
+Body: { eventId }
 ```
 
-### DELETE /api/recipes/:id
-Delete recipe
-```bash
-curl -X DELETE http://127.0.0.1:5000/api/recipes/1
-```
-
-### GET /api/search?q=query
-Search recipes
-```bash
-curl http://127.0.0.1:5000/api/search?q=chicken
-```
-
-### GET /api/statistics
-Get database statistics
-```bash
-curl http://127.0.0.1:5000/api/statistics
-```
+### Legacy Endpoints (Deprecated)
+The old Flask API endpoints (`server.py`) are no longer used in production but remain available for local development.
 
 ## File Structure
 
@@ -352,7 +468,9 @@ For issues or questions:
 ---
 
 **Created:** October 30, 2025
-**Version:** 1.0
+**Version:** 3.0.0
+**Last Updated:** November 3, 2025
 **Author:** Fergi (with Claude Code assistance)
+**Live Site:** https://fergi-cooking.netlify.app
 
 Enjoy your organized recipe collection! 👨‍🍳
