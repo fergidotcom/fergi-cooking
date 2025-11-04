@@ -7,7 +7,8 @@
 
 # Functions configuration
 [functions]
-  # Note: recipes.json now loaded from Dropbox, not bundled
+  # All data now stored in Dropbox - no included files needed
+  # included_files = []
 
 # Redirect API calls to Netlify Functions
 [[redirects]]
@@ -35,11 +36,73 @@
   to = "/.netlify/functions/get-recipes"
   status = 200
 
-# SPA fallback - serve index.html for all other routes
+[[redirects]]
+  from = "/api/events"
+  to = "/.netlify/functions/get-events"
+  status = 200
+
+[[redirects]]
+  from = "/api/create-event"
+  to = "/.netlify/functions/create-event"
+  status = 200
+
+[[redirects]]
+  from = "/api/event-recipes"
+  to = "/.netlify/functions/event-recipes"
+  status = 200
+
+[[redirects]]
+  from = "/api/record-selection"
+  to = "/.netlify/functions/record-selection"
+  status = 200
+
+[[redirects]]
+  from = "/api/generate-email"
+  to = "/.netlify/functions/generate-email"
+  status = 200
+
+[[redirects]]
+  from = "/api/load-recipes"
+  to = "/.netlify/functions/load-recipes"
+  status = 200
+
+[[redirects]]
+  from = "/api/save-recipes"
+  to = "/.netlify/functions/save-recipes"
+  status = 200
+
+[[redirects]]
+  from = "/api/save-events"
+  to = "/.netlify/functions/save-events"
+  status = 200
+
+[[redirects]]
+  from = "/api/manage-contributors"
+  to = "/.netlify/functions/manage-contributors"
+  status = 200
+
+[[redirects]]
+  from = "/api/add-recipe"
+  to = "/.netlify/functions/add-recipe"
+  status = 200
+
+[[redirects]]
+  from = "/api/extract-file"
+  to = "/.netlify/functions/extract-file"
+  status = 200
+
+[[redirects]]
+  from = "/api/format-recipe"
+  to = "/.netlify/functions/format-recipe"
+  status = 200
+
+# SPA fallback - serve index.html for all other routes (except files)
+# This ensures JSON, HTML, JS, CSS files are served correctly
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+  force = false  # Don't redirect if file exists
 
 # Headers for CORS
 [[headers]]

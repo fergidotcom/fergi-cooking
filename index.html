@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fergi's Recipe Collection</title>
+    <title>Fergi's Recipe Collection v3.0</title>
     <style>
         * {
             margin: 0;
@@ -624,11 +624,20 @@
                 display: none !important;
             }
 
-            /* Optimize recipe detail for print */
+            /* Optimize recipe detail for print - TWO COLUMN LAYOUT */
             .recipe-detail {
                 box-shadow: none !important;
                 padding: 0 !important;
                 margin: 0 !important;
+                display: grid !important;
+                grid-template-columns: 1fr 1fr !important;
+                gap: 1.5rem !important;
+            }
+
+            /* Title spans both columns */
+            .recipe-detail-header {
+                grid-column: 1 / -1 !important;
+                page-break-after: avoid !important;
             }
 
             .recipe-detail-header h2 {
@@ -637,24 +646,54 @@
                 color: #000 !important;
             }
 
-            .recipe-section {
+            /* Meta info spans both columns */
+            .recipe-meta {
+                grid-column: 1 / -1 !important;
+                page-break-after: avoid !important;
+            }
+
+            /* Ingredients in left column */
+            .recipe-section:nth-of-type(1) {
+                grid-column: 1 !important;
                 page-break-inside: avoid;
-                margin: 1rem 0 !important;
+                margin: 0 !important;
+            }
+
+            /* Instructions in right column */
+            .recipe-section:nth-of-type(2) {
+                grid-column: 2 !important;
+                page-break-inside: avoid;
+                margin: 0 !important;
             }
 
             .recipe-section h3 {
                 font-size: 1.2rem !important;
                 color: #000 !important;
+                margin-bottom: 0.75rem !important;
             }
 
-            .ingredients-list li,
+            .ingredients-list li {
+                page-break-inside: avoid;
+                font-size: 11pt !important;
+                line-height: 1.6 !important;
+                padding: 0.3rem 0 !important;
+            }
+
             .instructions-list li {
                 page-break-inside: avoid;
+                padding: 0.5rem 0 0.5rem 2rem !important;
+                margin-bottom: 0.5rem !important;
+                font-size: 11pt !important;
+                line-height: 1.6 !important;
             }
 
-            .instructions-list li {
-                padding: 0.5rem 0 0.5rem 3rem !important;
-                margin-bottom: 0.5rem !important;
+            /* Notes span both columns at bottom */
+            .recipe-notes {
+                grid-column: 1 / -1 !important;
+                border-top: 1px solid #ccc !important;
+                padding-top: 0.5rem !important;
+                margin-top: 1rem !important;
+                font-size: 10pt !important;
             }
 
             /* Ensure colors print correctly */
@@ -682,8 +721,8 @@
 </head>
 <body>
     <header>
-        <h1>Fergi's Recipe Collection</h1>
-        <p>Your personal recipe database and cooking companion</p>
+        <h1>Fergi's Recipe Collection <span style="font-size: 0.6em; opacity: 0.8;">v3.0</span></h1>
+        <p>Your personal recipe database and cooking companion • Recipe Import & Contributor Management</p>
         <div id="dropboxStatus" style="margin-top: 1rem; font-size: 0.9rem;">
             <span id="authStatus">Not connected to Dropbox</span>
             <button id="authButton" onclick="app.initiateDropboxAuth()" style="margin-left: 1rem; padding: 0.5rem 1rem; background: #0061ff; color: white; border: none; border-radius: 4px; cursor: pointer;">Connect Dropbox</button>
@@ -695,10 +734,15 @@
         <button onclick="app.showMainRecipes()">Main Collection</button>
         <button onclick="app.showJanetRecipes()" style="background: #9b59b6; border: 2px solid #8e44ad;">📖 Janet Mason's Cookbook</button>
         <button onclick="app.showFavorites()" style="background: var(--success-color);">★ Favorites</button>
-        <button onclick="app.showNeedsReview()" style="background: var(--warning-color);">Needs Review</button>
+        <button onclick="window.location.href='events.html'" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none;">🎉 Events</button>
+        <button onclick="app.showContributorsModal()" style="background: #1abc9c; color: white;">👥 Contributors</button>
+        <button onclick="window.location.href='add-recipe.html'" style="background: #e67e22; color: white; font-weight: bold;">+ Add Recipe</button>
         <button class="secondary" onclick="app.showStatistics()">Statistics</button>
         <div class="search-container">
             <input type="text" id="searchInput" placeholder="Search recipes..." onkeyup="app.handleSearch(event)">
+            <select id="contributorFilter" onchange="app.filterByContributor()">
+                <option value="">All Contributors</option>
+            </select>
             <button onclick="app.performSearch()">Search</button>
         </div>
     </nav>
@@ -739,6 +783,43 @@
         </div>
     </div>
 
+    <!-- Contributors Management Modal -->
+    <div id="contributorsModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <button class="modal-close" onclick="app.closeContributorsModal()">&times;</button>
+            <h2 style="margin-bottom: 1.5rem;">Manage Contributors</h2>
+
+            <div style="margin-bottom: 2rem;">
+                <h3 style="font-size: 1.1rem; margin-bottom: 1rem; color: var(--text-muted);">Current Contributors:</h3>
+                <div id="contributorsList" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <!-- Populated by JavaScript -->
+                </div>
+            </div>
+
+            <div style="border-top: 2px solid var(--border-color); padding-top: 1.5rem; margin-top: 1.5rem;">
+                <h3 style="font-size: 1.1rem; margin-bottom: 1rem; color: var(--text-muted);">Add New Contributor:</h3>
+                <div style="display: flex; gap: 0.5rem;">
+                    <input type="text" id="newContributorInput" placeholder="Enter contributor name..."
+                           style="flex: 1; padding: 0.7rem; border: 2px solid var(--border-color); border-radius: 5px; font-size: 1rem;">
+                    <button onclick="app.addContributor()"
+                            style="padding: 0.7rem 1.5rem; background: var(--success-color); color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem; font-weight: bold;">
+                        + Add
+                    </button>
+                </div>
+                <p style="margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">
+                    Anyone can add or manage contributors. This is a public recipe collection.
+                </p>
+            </div>
+
+            <div style="margin-top: 2rem; text-align: center;">
+                <button onclick="app.closeContributorsModal()"
+                        style="padding: 0.7rem 2rem; background: var(--primary-color); color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem;">
+                    Done
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Main Application
         const app = {
@@ -752,7 +833,7 @@
             RECIPES_PATH: '/recipes.json',  // Same app folder as Reference Refinement
 
             async init() {
-                // Check for OAuth callback
+                // Check for OAuth callback first
                 const urlParams = new URLSearchParams(window.location.search);
                 const code = urlParams.get('code');
 
@@ -773,12 +854,63 @@
                     await this.loadRecipes();
                 } else {
                     this.updateAuthStatus(false);
-                    this.showError('Please connect to Dropbox to access your recipes');
+                    // Load from local JSON as fallback
+                    await this.loadRecipes();
                 }
             },
 
             initDropboxClient(accessToken) {
                 this.dropboxClient = new Dropbox.Dropbox({ accessToken });
+            },
+
+            async refreshAccessToken() {
+                try {
+                    if (!this.dropboxRefreshToken) {
+                        throw new Error('No refresh token available');
+                    }
+
+                    const response = await fetch('/.netlify/functions/dropbox-oauth', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            grant_type: 'refresh_token',
+                            refresh_token: this.dropboxRefreshToken
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Token refresh failed');
+                    }
+
+                    const data = await response.json();
+
+                    // Update tokens
+                    this.dropboxAccessToken = data.access_token;
+                    if (data.refresh_token) {
+                        this.dropboxRefreshToken = data.refresh_token;
+                    }
+
+                    // Save to localStorage
+                    localStorage.setItem('dropbox_access_token', this.dropboxAccessToken);
+                    if (data.refresh_token) {
+                        localStorage.setItem('dropbox_refresh_token', data.refresh_token);
+                    }
+
+                    // Reinitialize client
+                    this.initDropboxClient(this.dropboxAccessToken);
+
+                    console.log('Access token refreshed successfully');
+                    return true;
+                } catch (error) {
+                    console.error('Token refresh failed:', error);
+                    // Clear tokens and require re-auth
+                    localStorage.removeItem('dropbox_access_token');
+                    localStorage.removeItem('dropbox_refresh_token');
+                    this.dropboxAccessToken = null;
+                    this.dropboxRefreshToken = null;
+                    this.updateAuthStatus(false);
+                    return false;
+                }
             },
 
             updateAuthStatus(connected) {
@@ -846,23 +978,53 @@
 
             async loadRecipes() {
                 try {
-                    if (!this.dropboxClient) {
-                        this.showError('Not connected to Dropbox');
-                        return;
+                    this.showLoading();
+
+                    // Try to load from Dropbox first (writable storage)
+                    if (this.dropboxAccessToken) {
+                        try {
+                            let response = await fetch('/.netlify/functions/load-recipes', {
+                                method: 'GET',
+                                headers: {
+                                    'Authorization': `Bearer ${this.dropboxAccessToken}`
+                                }
+                            });
+
+                            // If token expired, refresh and retry
+                            if (response.status === 401) {
+                                console.log('Token expired during load, refreshing...');
+                                const refreshed = await this.refreshAccessToken();
+
+                                if (refreshed) {
+                                    response = await fetch('/.netlify/functions/load-recipes', {
+                                        method: 'GET',
+                                        headers: {
+                                            'Authorization': `Bearer ${this.dropboxAccessToken}`
+                                        }
+                                    });
+                                }
+                            }
+
+                            if (response.ok) {
+                                const data = await response.json();
+                                this.recipes = data.recipes;
+                                this.renderRecipeGrid();
+                                return;
+                            }
+                        } catch (dropboxError) {
+                            console.log('Dropbox load failed, falling back to local JSON:', dropboxError);
+                        }
                     }
 
-                    this.showLoading();
-                    const response = await this.dropboxClient.filesDownload({ path: this.RECIPES_PATH });
-                    const blob = response.result.fileBlob;
-                    const text = await blob.text();
-                    this.recipes = JSON.parse(text);
+                    // Fallback to local recipes.json (read-only)
+                    const response = await fetch('/recipes.json');
+                    if (!response.ok) {
+                        throw new Error(`Failed to load recipes: ${response.status} ${response.statusText}`);
+                    }
+                    this.recipes = await response.json();
                     this.renderRecipeGrid();
                 } catch (error) {
-                    if (error.status === 409) {
-                        this.showError('recipes.json not found in Dropbox. Please upload the file first.');
-                    } else {
-                        this.showError(`Failed to load recipes: ${error.message}`);
-                    }
+                    this.showError(`Failed to load recipes: ${error.message}`);
                 } finally {
                     this.hideLoading();
                 }
@@ -870,23 +1032,61 @@
 
             async saveRecipes() {
                 try {
-                    if (!this.dropboxClient) {
-                        throw new Error('Not connected to Dropbox');
+                    if (!this.dropboxAccessToken) {
+                        throw new Error('Not connected to Dropbox. Please connect to save changes.');
                     }
 
                     this.showLoading();
-                    const jsonContent = JSON.stringify(this.recipes, null, 2);
-                    const blob = new Blob([jsonContent], { type: 'application/json' });
 
-                    await this.dropboxClient.filesUpload({
-                        path: this.RECIPES_PATH,
-                        contents: blob,
-                        mode: 'overwrite',
-                        autorename: false
+                    let response = await fetch('/.netlify/functions/save-recipes', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            recipes: this.recipes,
+                            accessToken: this.dropboxAccessToken
+                        })
                     });
 
-                    // Silently save - only show errors, not success
+                    // If token expired, refresh and retry
+                    if (response.status === 401) {
+                        const errorData = await response.json();
+                        if (errorData.expired || (errorData.error && errorData.error.toLowerCase().includes('expired'))) {
+                            console.log('Token expired, refreshing...');
+                            const refreshed = await this.refreshAccessToken();
+
+                            if (refreshed) {
+                                console.log('Token refreshed, retrying save...');
+                                // Retry with new token
+                                response = await fetch('/.netlify/functions/save-recipes', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                        recipes: this.recipes,
+                                        accessToken: this.dropboxAccessToken
+                                    })
+                                });
+                            } else {
+                                throw new Error('Token expired. Please reconnect to Dropbox.');
+                            }
+                        } else {
+                            throw new Error(errorData.error || 'Unauthorized');
+                        }
+                    }
+
+                    if (!response.ok) {
+                        const error = await response.json();
+                        throw new Error(error.error || 'Failed to save recipes');
+                    }
+
+                    const result = await response.json();
+                    console.log('Recipes saved successfully:', result);
+                    // Success - no need to show alert
                 } catch (error) {
+                    console.error('Save error:', error);
                     this.showError(`Failed to save recipes: ${error.message}`);
                 } finally {
                     this.hideLoading();
@@ -1043,7 +1243,16 @@
                             <button class="btn btn-primary" onclick="app.editRecipe(${recipe.id})">Edit Recipe</button>
                             <button class="btn btn-danger" onclick="app.deleteRecipe(${recipe.id})">Delete Recipe</button>
                             <button class="btn btn-success" onclick="app.toggleFavorite(${recipe.id}, ${recipe.favorite ? 1 : 0})">
-                                ${recipe.favorite ? 'Remove from Favorites' : 'Add to Favorites'}
+                                ${recipe.favorite ? '★ Remove from Favorites' : '☆ Add to Favorites'}
+                            </button>
+                            <button class="btn" onclick="app.addToEvent(${recipe.id})" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                                🎉 Add to Event
+                            </button>
+                        </div>
+
+                        <div style="text-align: center; margin-top: 2rem; padding-top: 1rem; border-top: 2px solid #e0e0e0;">
+                            <button class="btn btn-primary" onclick="app.closeModal()" style="padding: 1rem 3rem; font-size: 1.1rem;">
+                                ✕ Close
                             </button>
                         </div>
                     </div>
@@ -1246,6 +1455,7 @@
                 });
 
                 try {
+                    console.log('Saving recipe:', recipeData);
                     const response = await fetch(`${this.apiUrl}/recipes/${this.currentRecipe.id}`, {
                         method: 'PUT',
                         headers: {
@@ -1254,7 +1464,18 @@
                         body: JSON.stringify(recipeData)
                     });
 
-                    const data = await response.json();
+                    console.log('Response status:', response.status);
+                    const responseText = await response.text();
+                    console.log('Response text:', responseText);
+
+                    let data;
+                    try {
+                        data = JSON.parse(responseText);
+                    } catch (parseError) {
+                        console.error('Failed to parse response:', parseError);
+                        alert(`Server returned invalid response: ${responseText.substring(0, 200)}`);
+                        return;
+                    }
 
                     if (data.success) {
                         alert('Recipe updated successfully!');
@@ -1262,9 +1483,12 @@
                         await this.showRecipeDetail(this.currentRecipe.id);
                         await this.loadRecipes();
                     } else {
-                        alert(`Failed to update recipe: ${data.error}`);
+                        const errorMsg = data.error || 'Unknown error';
+                        const details = data.dropboxError ? `\nDropbox error: ${JSON.stringify(data.dropboxError)}` : '';
+                        alert(`Failed to update recipe: ${errorMsg}${details}`);
                     }
                 } catch (error) {
+                    console.error('Error saving recipe:', error);
                     alert(`Error: ${error.message}`);
                 }
             },
@@ -1307,6 +1531,12 @@
                 }
             },
 
+            addToEvent(recipeId) {
+                // Store recipe ID and redirect to events page
+                localStorage.setItem('pendingRecipeForEvent', recipeId);
+                window.location.href = 'events.html?action=add_recipe&recipe_id=' + recipeId;
+            },
+
             printRecipe(recipeId) {
                 // Add print-specific class to modal
                 const modal = document.getElementById('recipeModal');
@@ -1327,7 +1557,8 @@
                     total_recipes: this.recipes.length,
                     favorites: this.recipes.filter(r => r.favorite === 1 || r.favorite === true).length,
                     by_source: [],
-                    by_cuisine: []
+                    by_cuisine: [],
+                    by_contributor: []
                 };
 
                 // Count by source
@@ -1347,6 +1578,17 @@
                     }
                 });
                 stats.by_cuisine = Object.entries(cuisineCounts).map(([cuisine, count]) => ({ cuisine, count }));
+
+                // Count by contributor
+                const contributorCounts = {};
+                this.recipes.forEach(r => {
+                    if (r.contributor) {
+                        contributorCounts[r.contributor] = (contributorCounts[r.contributor] || 0) + 1;
+                    }
+                });
+                stats.by_contributor = Object.entries(contributorCounts)
+                    .map(([contributor, count]) => ({ contributor, count }))
+                    .sort((a, b) => b.count - a.count);  // Sort by count descending
 
                 this.renderStatistics(stats);
                 document.getElementById('statsSection').classList.remove('hidden');
@@ -1385,6 +1627,24 @@
                 }
 
                 dashboard.innerHTML = html;
+
+                // Add contributor breakdown below
+                if (stats.by_contributor && stats.by_contributor.length > 0) {
+                    const contributorHtml = `
+                        <div style="grid-column: 1 / -1; margin-top: 1rem; background: var(--card-background); padding: 1.5rem; border-radius: 10px; box-shadow: var(--shadow);">
+                            <h3 style="margin-bottom: 1rem; color: var(--primary-color);">Recipes by Contributor</h3>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                                ${stats.by_contributor.map(item => `
+                                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.7rem 1rem; background: #f8f9fa; border-radius: 5px; border-left: 4px solid var(--accent-color);">
+                                        <span style="font-weight: 500;">${item.contributor}</span>
+                                        <span style="font-size: 1.2rem; font-weight: bold; color: var(--accent-color);">${item.count}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                    dashboard.innerHTML += contributorHtml;
+                }
             },
 
             showAll() {
@@ -1532,12 +1792,166 @@
 
             showSuccess(message) {
                 alert(message);
+            },
+
+            // Contributors Management Functions
+            contributors: [],
+
+            async loadContributors() {
+                try {
+                    const response = await fetch(`${this.apiUrl}/manage-contributors`);
+                    const data = await response.json();
+                    if (data.success) {
+                        this.contributors = data.contributors;
+                        this.populateContributorFilter();
+                    }
+                } catch (error) {
+                    console.error('Error loading contributors:', error);
+                }
+            },
+
+            populateContributorFilter() {
+                const filterSelect = document.getElementById('contributorFilter');
+                if (!filterSelect) return;
+
+                // Clear existing options except "All Contributors"
+                filterSelect.innerHTML = '<option value="">All Contributors</option>';
+
+                // Add each contributor as an option
+                this.contributors.forEach(contributor => {
+                    const option = document.createElement('option');
+                    option.value = contributor;
+                    option.textContent = contributor;
+                    filterSelect.appendChild(option);
+                });
+            },
+
+            async showContributorsModal() {
+                // Load latest contributors
+                await this.loadContributors();
+
+                // Populate contributors list
+                const contributorsList = document.getElementById('contributorsList');
+                contributorsList.innerHTML = '';
+
+                this.contributors.forEach(contributor => {
+                    const contributorItem = document.createElement('div');
+                    contributorItem.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 0.7rem 1rem; background: #f8f9fa; border-radius: 5px; border: 1px solid var(--border-color);';
+
+                    contributorItem.innerHTML = `
+                        <span style="font-size: 1rem; font-weight: 500;">${contributor}</span>
+                        <button onclick="app.removeContributor('${contributor}')"
+                                style="padding: 0.4rem 1rem; background: var(--secondary-color); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem;">
+                            Remove
+                        </button>
+                    `;
+
+                    contributorsList.appendChild(contributorItem);
+                });
+
+                // Show modal
+                document.getElementById('contributorsModal').classList.add('active');
+            },
+
+            closeContributorsModal() {
+                document.getElementById('contributorsModal').classList.remove('active');
+                // Clear input
+                document.getElementById('newContributorInput').value = '';
+            },
+
+            async addContributor() {
+                const input = document.getElementById('newContributorInput');
+                const contributorName = input.value.trim();
+
+                if (!contributorName) {
+                    alert('Please enter a contributor name');
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`${this.apiUrl}/manage-contributors`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ contributor: contributorName })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        alert(`Contributor "${contributorName}" added successfully!`);
+                        input.value = '';
+                        // Reload modal
+                        await this.showContributorsModal();
+                    } else {
+                        alert(data.error || 'Failed to add contributor');
+                    }
+                } catch (error) {
+                    console.error('Error adding contributor:', error);
+                    alert('Error adding contributor: ' + error.message);
+                }
+            },
+
+            async removeContributor(contributorName) {
+                if (!confirm(`Are you sure you want to remove contributor "${contributorName}"?\n\nNote: This will fail if they have existing recipes.`)) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`${this.apiUrl}/manage-contributors`, {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ contributor: contributorName })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        alert(`Contributor "${contributorName}" removed successfully!`);
+                        // Reload modal
+                        await this.showContributorsModal();
+                    } else {
+                        alert(data.error || 'Failed to remove contributor');
+                    }
+                } catch (error) {
+                    console.error('Error removing contributor:', error);
+                    alert('Error removing contributor: ' + error.message);
+                }
+            },
+
+            async filterByContributor() {
+                const filterSelect = document.getElementById('contributorFilter');
+                const contributor = filterSelect.value;
+
+                this.showLoading();
+
+                try {
+                    let url = `${this.apiUrl}/get-recipes`;
+                    if (contributor) {
+                        url += `?contributor=${encodeURIComponent(contributor)}`;
+                    }
+
+                    const response = await fetch(url);
+                    const data = await response.json();
+
+                    if (data.success) {
+                        this.recipes = data.recipes;
+                        this.renderRecipeGrid();
+                    } else {
+                        this.showError('Failed to filter recipes');
+                    }
+                } catch (error) {
+                    console.error('Error filtering by contributor:', error);
+                    this.showError('Error filtering recipes: ' + error.message);
+                } finally {
+                    this.hideLoading();
+                }
             }
         };
 
         // Initialize app when page loads
         document.addEventListener('DOMContentLoaded', () => {
             app.init();
+            app.loadContributors();
         });
     </script>
 </body>

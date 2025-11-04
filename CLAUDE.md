@@ -2,15 +2,63 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with the Cooking project.
 
+## Infrastructure
+
+@~/.claude/global-infrastructure.md
+
 ## Project Overview
 
 **Cooking Project** - A personal recipe collection and management system for organizing, searching, and managing family recipes and cooking resources.
 
 **Project Location:** `/Users/joeferguson/Library/CloudStorage/Dropbox/Fergi/Cooking`
 **Created:** October 30, 2025
-**Status:** ✓ Production - Deployed to Netlify
+**Status:** ✓ Production - Deployed to Netlify (v3.0.0)
 **Live URL:** https://fergi-cooking.netlify.app
-**Purpose:** Organize and manage recipe collection, create searchable recipe database, document family recipes
+**Purpose:** Organize and manage recipe collection, create searchable recipe database, document family recipes, manage cooking events with guest preferences, import recipes with AI formatting, manage contributors
+
+## 🆕 Recent Updates - November 3, 2025
+
+**v3.0.0 - MAJOR: Recipe Import System with Contributor Management:**
+- ✅ Complete recipe import wizard with 4-step process
+- ✅ File upload support: PDF, Word (DOCX), Images (OCR), Plain Text
+- ✅ AI-powered recipe formatting using Claude API
+- ✅ Contributor management system (public, no authentication)
+- ✅ Contributor filter dropdown and statistics
+- ✅ Automatic bulk assignment: 85 Janet Mason recipes, 37 Fergi recipes
+- ✅ All data migrated to Dropbox for real-time updates (no redeployment needed)
+- ✅ Single database architecture: recipes.json in Dropbox (shared with Reference Refinement)
+- ✅ Beautiful two-column print layout for recipes
+- ✅ 17 Netlify Functions deployed
+- ✅ New dependencies: pdf-parse, mammoth, tesseract.js, @anthropic-ai/sdk
+
+**v2.8.1 - Custom Dish Name Fix:**
+- ✅ Fixed custom dish name handling for "will_bring" responses
+- ✅ Smart detection: user input becomes dish name, not description
+- ✅ Improved form labels with clear help text
+- ✅ Example: Murray prefers Beef Stroganoff but brings Fish → Shows "You will bring: Fish"
+
+**v2.8.0 - CRITICAL: API Endpoints Fixed:**
+- ✅ Fixed broken get-recipe and get-recipes API endpoints
+- ✅ Bundled recipes.json with Netlify Functions (added `included_files` config)
+- ✅ Recipe names now display correctly throughout system
+- ✅ Both single recipe and all recipes endpoints fully functional
+- ✅ Dual loading strategy: try get-recipe first, fallback to get-recipes
+
+**v2.7.9 - Enhanced Recipe Loading:**
+- ✅ Robust recipe loading with dual strategy and comprehensive error handling
+- ✅ Loading screen displays while fetching recipe details
+- ✅ Form refuses to display without recipe data (prevents "Recipe #X" errors)
+- ✅ Detailed console logging with emojis for debugging
+
+**v2.7.8 - Recipe Name Display Improvements:**
+- ✅ Removed all "Recipe #X" fallback text
+- ✅ Shows actual recipe names (e.g., "Beef Stroganoff", "Bananas Foster")
+- ✅ Context-aware headings (prefer vs. will_bring)
+
+**Documentation:**
+- ✅ SESSION_SUMMARY_2025-11-03_RECIPE_DISPLAY_FIXES.md - Comprehensive documentation
+- ✅ All fixes, root causes, and solutions documented
+- ✅ API testing procedures documented
 
 ## Project Structure
 
@@ -18,17 +66,31 @@ This file provides guidance to Claude Code (claude.ai/code) when working with th
 Cooking/
 ├── CLAUDE.md                           # This file - Project documentation
 ├── DEPLOYMENT.md                       # ⭐ Netlify deployment guide
-├── index.html                          # Web interface (deployed to Netlify)
-├── recipes.json                        # Recipe data for web interface
-├── recipes.db                          # SQLite database (122 recipes)
+├── SESSION_SUMMARY_2025-11-03_*.md    # Session summaries
+├── index.html                          # Recipe browsing interface (deployed)
+├── events.html                         # Event management interface (deployed)
+├── event-detail.html                   # Event dashboard (deployed)
+├── respond.html                        # Guest response page (deployed)
+├── recipes.json                        # Recipe data (122 recipes, deployed)
+├── recipes.db                          # SQLite database (local only)
 ├── netlify.toml                        # Netlify configuration
 ├── netlify/functions/                  # Serverless functions
-│   ├── get-recipe.js                  # Get single recipe
+│   ├── lib/
+│   │   └── dropbox-auth.js            # ⭐ OAuth helper (auto-refresh tokens)
+│   ├── get-recipe.js                  # Get/Update single recipe (GET + PUT)
 │   ├── get-recipes.js                 # Get all/search recipes
+│   ├── save-recipes.js                # Bulk save recipes
+│   ├── load-recipes.js                # Load from Dropbox
+│   ├── create-event.js                # Create/update events
+│   ├── get-events.js                  # Get events
+│   ├── save-events.js                 # Save events to Dropbox
+│   ├── event-recipes.js               # Add/remove recipes from events
+│   ├── record-selection.js            # Record guest responses
+│   ├── generate-email.js              # Generate event emails
 │   └── statistics.js                  # Recipe statistics
-├── *.pdf                               # Recipe PDFs (50+ files)
-├── *.pages                             # Recipe documents (Pages format)
-└── Janet Mason/                        # Sub-collection of recipes (85 images)
+├── *.pdf                               # Original recipe PDFs (50+ files)
+├── *.pages                             # Original recipe documents
+└── Janet Mason/                        # Sub-collection (85 images)
 ```
 
 ## Current Contents
@@ -214,11 +276,17 @@ See database schema: `sqlite3 recipes.db ".schema"`
 ## Important Files
 
 - **DEPLOYMENT.md** - Complete Netlify deployment guide
-- **RECIPE_INSTRUCTION_REFORMATTING_SUMMARY.md** - Recent instruction updates
+- **SESSION_SUMMARY_2025-11-03_RECIPE_DISPLAY_FIXES.md** - ⭐ Latest: Recipe display and API fixes
+- **SESSION_SUMMARY_2025-11-02_DELETE_FIX.md** - Bug fix documentation
+- **RECIPE_INSTRUCTION_REFORMATTING_SUMMARY.md** - Recipe instruction updates
 - **reformat_instructions.py** - Script to reformat recipe instructions
 - **recipes.db** - SQLite database (not deployed)
-- **recipes.json** - JSON export for web interface (deployed)
-- **index.html** - Web interface (deployed to Netlify)
+- **recipes.json** - JSON export for web interface (bundled with Netlify Functions)
+- **netlify.toml** - Netlify configuration (includes recipes.json bundling)
+- **index.html** - Recipe browsing interface (deployed to Netlify)
+- **events.html** - Event management interface (deployed to Netlify)
+- **event-detail.html** - Event dashboard (deployed to Netlify)
+- **respond.html** - Public guest response page (deployed to Netlify)
 
 ## Notes
 
@@ -233,6 +301,27 @@ The recipe collection represents years of accumulated cooking knowledge and fami
 
 ---
 
-**Last Updated:** November 2, 2025
+**Last Updated:** November 3, 2025
+**Version:** v3.0.0
 **Status:** ✓ Production - Live at https://fergi-cooking.netlify.app
-**Database:** 122 recipes | **Web Interface:** Deployed to Netlify | **Features:** Search, Browse, Janet's Cookbook
+**Database:** 122 recipes (single JSON file in Dropbox) | **17 Netlify Functions** | **All APIs Working**
+
+**Core Features:**
+- Recipe browsing, search, and filtering
+- Contributor management (public, no authentication)
+- Contributor filter dropdown and statistics
+- **NEW: Recipe import wizard (4-step process)**
+- **NEW: File upload support (PDF, Word, Images with OCR, Text)**
+- **NEW: AI-powered recipe formatting (Claude API)**
+- **NEW: Beautiful two-column print layout**
+- Janet Mason's Cookbook (85 recipes, auto-assigned to Janet)
+- Event creation and management
+- Recipe-to-event assignment
+- Guest preference collection (with actual recipe names!)
+- Custom dish name handling (bring something different than selected recipe)
+- Volunteer category collection
+- Email generation with multiple copy methods
+- Public guest responses without login
+- Dietary restrictions and own dish tracking
+- Context-aware response UI (prefer vs. will_bring)
+- Single database architecture (recipes.json in Dropbox, shared with Reference Refinement)

@@ -49,3 +49,63 @@ tmp/
 # *.pages
 # Janet Mason/*.JPG
 *.tar.gz
+
+# Backups and archives
+backups/
+*_backup_*.tar.gz
+*_backup_*.db
+
+# Session documentation (archived)
+docs/archive/
+SESSION_SUMMARY_*.md
+COMPLETE_SESSION_SUMMARY_*.md
+
+# OAuth and auth files
+get-refresh-token.js
+update-functions-auth.sh
+oauth-callback.html
+
+# Test files
+test-*.html
+check_*.html
+
+# Data files (in Dropbox, don't need in git)
+events.json
+guest-selections.json
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Extraction progress files
+janet_extraction_progress.json
+
+# Old/deprecated documentation
+*_DEPRECATED.md
+COOKING_CHANGELOG.md
+COOKING_OVERVIEW.md
+FERGI_COOKING_*.md
+JANET_*.md
+RECIPE_*.md
+DEPLOYMENT_SUMMARY.md
+DROPBOX_SETUP.md
+CREATE_DROPBOX_APP.md
+CURRENT_STATUS.md
+FEATURE_REQUESTS.md
+OAUTH_SETUP_GUIDE.md
+
+# Extraction scripts (generated, not maintained)
+extract_batch_*.py
+batch_extract_janet.py
+import_janet_recipes.py
+import_main_recipes.py
+vision_recipe_extractor.py
+
+# Other generated/temporary scripts
+cleanup_*.py
+enhance_*.py
+analyze_*.py
+add_calories.py
+quick_upload.py
+upload*.py
+reformat_instructions.py

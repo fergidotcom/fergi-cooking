@@ -1,0 +1,20 @@
+{
+  "name": "fergi-cooking",
+  "version": "3.0.0",
+  "description": "Fergi's Recipe Collection with Recipe Import & Contributor Management",
+  "main": "index.html",
+  "scripts": {
+    "dev": "netlify dev",
+    "deploy": "netlify deploy --prod"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.68.0",
+    "lambda-multipart-parser": "^1.0.1",
+    "mammoth": "^1.11.0",
+    "node-fetch": "^2.7.0",
+    "pdf-parse": "^2.4.5",
+    "tesseract.js": "^6.0.1"
+  },
+  "author": "Fergi",
+  "license": "ISC"
+}

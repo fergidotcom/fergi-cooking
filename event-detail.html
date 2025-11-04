@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Detail - Fergi Cooking v2.0</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #e74c3c;
+            --accent-color: #3498db;
+            --success-color: #27ae60;
+            --background: #ecf0f1;
+            --card-background: #ffffff;
+            --text-color: #2c3e50;
+            --text-muted: #7f8c8d;
+            --shadow: 0 2px 10px rgba(0,0,0,0.1);
+            --shadow-hover: 0 4px 20px rgba(0,0,0,0.15);
+            --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--background);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        header {
+            background: var(--gradient);
+            color: white;
+            padding: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        nav {
+            background: white;
+            padding: 1rem 2rem;
+            box-shadow: var(--shadow);
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .btn {
+            padding: 0.7rem 1.5rem;
+            border: none;
+            background: var(--accent-color);
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+        .btn-primary { background: var(--gradient); }
+        .btn-success { background: var(--success-color); }
+        .btn-danger { background: var(--secondary-color); }
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .event-header {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+        }
+
+        .event-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            margin: 1rem 0;
+            color: var(--text-muted);
+        }
+
+        .section {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+        }
+
+        .section h2 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .recipe-list {
+            display: grid;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .recipe-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid var(--gradient);
+        }
+
+        .recipe-info h4 {
+            color: var(--primary-color);
+            margin-bottom: 0.3rem;
+        }
+
+        .recipe-info p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .course-badge {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            background: var(--gradient);
+            color: white;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            margin-right: 0.5rem;
+        }
+
+        .variant-badge {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            background: #3498db;
+            color: white;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            margin-left: 0.5rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .stat-card {
+            background: var(--gradient);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            max-width: 800px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            font-size: 2rem;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+
+        .email-preview {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 5px;
+            margin-top: 1rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 0.7rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1 id="eventTitle">Event Detail</h1>
+        <p id="eventSubtitle"></p>
+    </header>
+
+    <nav>
+        <button class="btn" onclick="window.location.href='events.html'">← Back to Events</button>
+        <button class="btn btn-primary" onclick="app.addRecipe()">+ Add Recipe</button>
+        <button class="btn btn-success" onclick="app.generateEmail()">📧 Generate Email</button>
+        <button class="btn btn-danger" onclick="app.deleteEvent()">🗑️ Delete Event</button>
+    </nav>
+
+    <div class="container">
+        <!-- Event Info -->
+        <div class="event-header" id="eventInfo">
+            <!-- Event details loaded here -->
+        </div>
+
+        <!-- Statistics -->
+        <div class="section">
+            <h2>📊 Event Statistics</h2>
+            <div class="stats-grid" id="statsGrid">
+                <!-- Stats loaded here -->
+            </div>
+        </div>
+
+        <!-- Recipes -->
+        <div class="section">
+            <h2>🍽️ Menu</h2>
+            <div class="recipe-list" id="recipeList">
+                <!-- Recipes loaded here -->
+            </div>
+        </div>
+
+        <!-- Guest Responses -->
+        <div class="section">
+            <h2>👥 Guest Responses</h2>
+            <div id="guestResponses">
+                <!-- Guest responses loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Recipe Modal -->
+    <div id="addRecipeModal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="app.closeModal('addRecipeModal')">&times;</button>
+            <h2>Add Recipe to Event</h2>
+            <div>
+                <label><strong>Search Recipes:</strong></label>
+                <input type="text" id="recipeSearch" placeholder="Type to search recipes..."
+                       oninput="app.filterRecipes()"
+                       style="width: 100%; padding: 0.5rem; margin-bottom: 1rem; border: 2px solid #ddd; border-radius: 5px;">
+            </div>
+            <div>
+                <label><strong>Select Recipe:</strong></label>
+                <select id="recipeSelect" size="8" style="width: 100%; min-height: 200px;">
+                    <option value="">Loading recipes...</option>
+                </select>
+            </div>
+            <div style="margin-top: 1rem;">
+                <label><strong>Course Type:</strong></label>
+                <select id="courseType">
+                    <option value="appetizer">Appetizer</option>
+                    <option value="salad">Salad</option>
+                    <option value="main">Main Course</option>
+                    <option value="side">Side Dish</option>
+                    <option value="dessert">Dessert</option>
+                    <option value="beverage">Beverage</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+                <button class="btn btn-primary" onclick="app.saveRecipeToEvent()">Add Recipe</button>
+                <button class="btn" onclick="app.closeModal('addRecipeModal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Email Preview Modal -->
+    <div id="emailModal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="app.closeModal('emailModal')">&times;</button>
+            <h2>📧 Event Email</h2>
+
+            <div style="background: #f0f7ff; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #3498db;">
+                <h3 style="margin-top: 0; color: #2c3e50;">How to use this email:</h3>
+                <ol style="margin: 0.5rem 0; padding-left: 1.5rem; color: #555;">
+                    <li><strong>Option 1 (Easiest):</strong> Click "Open in New Window" → Select all (Cmd+A / Ctrl+A) → Copy (Cmd+C / Ctrl+C) → Paste into your email</li>
+                    <li><strong>Option 2:</strong> Copy the rendered preview below directly and paste into your email</li>
+                    <li><strong>Replace {GUEST_EMAIL}</strong> with each recipient's actual email address</li>
+                </ol>
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap;">
+                <button class="btn btn-primary" onclick="app.openEmailInNewWindow()" style="flex: 1;">
+                    🪟 Open in New Window
+                </button>
+                <button class="btn btn-success" onclick="app.copyRenderedEmail()" style="flex: 1;">
+                    📋 Copy Rendered Email
+                </button>
+                <button class="btn" onclick="app.copyEmailHTML()" style="flex: 1;">
+                    📄 Copy HTML Source
+                </button>
+            </div>
+
+            <div>
+                <h3>Preview:</h3>
+                <div id="emailPreview" style="border: 1px solid #ddd; padding: 1rem; background: white; max-height: 500px; overflow-y: auto; margin-top: 0.5rem;"></div>
+            </div>
+
+            <details style="margin-top: 1rem;">
+                <summary style="cursor: pointer; padding: 0.5rem; background: #f5f5f5; border-radius: 5px;">Show HTML Source Code</summary>
+                <textarea id="emailHTML" readonly style="width: 100%; min-height: 300px; font-family: monospace; font-size: 0.75rem; margin-top: 0.5rem; padding: 0.5rem; border: 1px solid #ddd; border-radius: 5px;"></textarea>
+            </details>
+        </div>
+    </div>
+
+    <script>
+        const app = {
+            eventId: null,
+            event: null,
+            recipes: [],
+            allRecipes: [],
+            dropboxAccessToken: null,
+
+            async init() {
+                // Load Dropbox access token
+                this.dropboxAccessToken = localStorage.getItem('dropbox_access_token');
+                if (!this.dropboxAccessToken) {
+                    alert('Please connect to Dropbox first. Redirecting to main page...');
+                    window.location.href = 'index.html';
+                    return;
+                }
+
+                const urlParams = new URLSearchParams(window.location.search);
+                this.eventId = urlParams.get('id');
+
+                if (!this.eventId) {
+                    alert('No event ID specified');
+                    window.location.href = 'events.html';
+                    return;
+                }
+
+                await this.loadEvent();
+                await this.loadAllRecipes();
+                this.checkPendingRecipe();
+            },
+
+            async loadEvent() {
+                try {
+                    const response = await fetch(`/.netlify/functions/get-events?id=${this.eventId}`, {
+                        headers: {
+                            'Authorization': `Bearer ${this.dropboxAccessToken}`
+                        }
+                    });
+                    if (response.ok) {
+                        this.event = await response.json();
+                        this.recipes = this.event.recipes || [];
+                        this.renderEvent();
+                        await this.loadGuestResponses();
+                    } else {
+                        alert('Event not found');
+                        window.location.href = 'events.html';
+                    }
+                } catch (error) {
+                    console.error('Error loading event:', error);
+                    alert('Error loading event');
+                }
+            },
+
+            async loadAllRecipes() {
+                try {
+                    const response = await fetch('/recipes.json');
+                    if (response.ok) {
+                        this.allRecipes = await response.json();
+                    }
+                } catch (error) {
+                    console.error('Error loading recipes:', error);
+                }
+            },
+
+            renderEvent() {
+                const date = this.event.event_date ? new Date(this.event.event_date).toLocaleDateString('en-US', {
+                    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+                }) : 'Date TBD';
+
+                document.getElementById('eventTitle').textContent = this.event.name;
+                document.getElementById('eventSubtitle').textContent = date;
+
+                document.getElementById('eventInfo').innerHTML = `
+                    <h2>${this.event.name}</h2>
+                    <div class="event-meta">
+                        ${this.event.event_date ? `<span><strong>📅 Date:</strong> ${date}</span>` : ''}
+                        ${this.event.event_time ? `<span><strong>🕐 Time:</strong> ${this.event.event_time}</span>` : ''}
+                        ${this.event.location ? `<span><strong>📍 Location:</strong> ${this.event.location}</span>` : ''}
+                    </div>
+                    ${this.event.description ? `<p style="margin-top: 1rem; color: #555;">${this.event.description}</p>` : ''}
+                `;
+
+                // Render stats
+                document.getElementById('statsGrid').innerHTML = `
+                    <div class="stat-card">
+                        <h3>${this.recipes.length}</h3>
+                        <p>Recipes</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>${this.event.guest_count || 0}</h3>
+                        <p>Guest Responses</p>
+                    </div>
+                `;
+
+                // Render recipes
+                this.renderRecipes();
+            },
+
+            renderRecipes() {
+                const list = document.getElementById('recipeList');
+
+                if (this.recipes.length === 0) {
+                    list.innerHTML = '<p style="color: #999;">No recipes added yet. Click "Add Recipe" to get started!</p>';
+                    return;
+                }
+
+                list.innerHTML = this.recipes.map(recipe => `
+                    <div class="recipe-item">
+                        <div class="recipe-info">
+                            <h4>
+                                ${recipe.course_type ? `<span class="course-badge">${recipe.course_type}</span>` : ''}
+                                ${recipe.title}
+                                ${recipe.has_variants ? '<span class="variant-badge">Has variants</span>' : ''}
+                            </h4>
+                            <p>${recipe.description || ''}</p>
+                            ${recipe.variants ? `<p style="font-size: 0.85rem; margin-top: 0.5rem;"><strong>Variants:</strong> ${recipe.variants.map(v => v.variant_name).join(', ')}</p>` : ''}
+                        </div>
+                        <button class="btn btn-danger" onclick="app.removeRecipe(${recipe.id})">Remove</button>
+                    </div>
+                `).join('');
+            },
+
+            async loadGuestResponses() {
+                try {
+                    const response = await fetch(`/.netlify/functions/record-selection?event_id=${this.eventId}`);
+                    if (response.ok) {
+                        const selections = await response.json();
+                        this.renderGuestResponses(selections);
+                    }
+                } catch (error) {
+                    console.error('Error loading responses:', error);
+                }
+            },
+
+            renderGuestResponses(selections) {
+                const container = document.getElementById('guestResponses');
+
+                if (selections.length === 0) {
+                    container.innerHTML = '<p style="color: #999;">No guest responses yet.</p>';
+                    return;
+                }
+
+                // Separate volunteers from other selections
+                const volunteers = selections.filter(s => s.selection_type === 'volunteer_category');
+                const otherSelections = selections.filter(s => s.selection_type !== 'volunteer_category');
+
+                // Group by guest for regular selections
+                const byGuest = {};
+                otherSelections.forEach(sel => {
+                    if (!byGuest[sel.guest_email]) {
+                        byGuest[sel.guest_email] = {
+                            name: sel.guest_name || sel.guest_email,
+                            email: sel.guest_email,
+                            selections: []
+                        };
+                    }
+                    byGuest[sel.guest_email].selections.push(sel);
+                });
+
+                // Group volunteers by category
+                const volunteersByCategory = {};
+                volunteers.forEach(vol => {
+                    const category = vol.notes; // Category name is stored in notes
+                    if (!volunteersByCategory[category]) {
+                        volunteersByCategory[category] = [];
+                    }
+                    volunteersByCategory[category].push({
+                        name: vol.guest_name || vol.guest_email,
+                        email: vol.guest_email
+                    });
+                });
+
+                let html = '';
+
+                // Show volunteers first if any
+                if (volunteers.length > 0) {
+                    html += `
+                        <div style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); padding: 1.5rem; border-radius: 10px; margin-bottom: 1.5rem;">
+                            <h4 style="color: white; margin-bottom: 1rem;">🤝 Category Volunteers</h4>
+                            ${Object.entries(volunteersByCategory).map(([category, vols]) => `
+                                <div style="background: rgba(255,255,255,0.2); padding: 0.8rem; border-radius: 5px; margin-bottom: 0.5rem;">
+                                    <strong style="color: white;">${category}:</strong>
+                                    <span style="color: white; opacity: 0.95;"> ${vols.map(v => v.name).join(', ')}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+
+                // Show regular guest selections
+                if (Object.keys(byGuest).length > 0) {
+                    html += '<h4 style="margin-bottom: 1rem;">Recipe Preferences & Contributions</h4>';
+                    html += Object.values(byGuest).map(guest => `
+                        <div style="padding: 1rem; background: #f8f9fa; border-radius: 8px; margin-bottom: 1rem;">
+                            <h4>${guest.name}</h4>
+                            <p style="font-size: 0.9rem; color: #666;">${guest.email}</p>
+                            <ul style="margin-top: 0.5rem; padding-left: 1.5rem;">
+                                ${guest.selections.map(sel => `
+                                    <li>
+                                        <strong>${sel.recipe_title || sel.bringing_own_dish_name || 'Selection'}</strong>
+                                        ${sel.variant_name ? ` - ${sel.variant_name}` : ''}
+                                        (${sel.selection_type === 'prefer' ? 'Prefers' :
+                                           sel.selection_type === 'will_bring' ? 'Will bring' :
+                                           sel.selection_type === 'dietary_restriction' ? 'Dietary restriction' :
+                                           sel.selection_type})
+                                        ${sel.notes && sel.selection_type === 'dietary_restriction' ? ` - ${sel.notes}` : ''}
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        </div>
+                    `).join('');
+                } else if (volunteers.length === 0) {
+                    html = '<p style="color: #999;">No guest responses yet.</p>';
+                }
+
+                container.innerHTML = html;
+            },
+
+            addRecipe() {
+                // Populate recipe dropdown
+                const select = document.getElementById('recipeSelect');
+                select.innerHTML = '<option value="">-- Select a recipe --</option>' +
+                    this.allRecipes.map(r => `<option value="${r.id}">${r.title}</option>`).join('');
+
+                // Clear search box
+                document.getElementById('recipeSearch').value = '';
+                document.getElementById('addRecipeModal').classList.add('active');
+            },
+
+            filterRecipes() {
+                const searchTerm = document.getElementById('recipeSearch').value.toLowerCase();
+                const select = document.getElementById('recipeSelect');
+
+                if (!searchTerm) {
+                    // Show all recipes
+                    select.innerHTML = '<option value="">-- Select a recipe --</option>' +
+                        this.allRecipes.map(r => `<option value="${r.id}">${r.title}</option>`).join('');
+                } else {
+                    // Filter recipes by search term
+                    const filtered = this.allRecipes.filter(r =>
+                        r.title.toLowerCase().includes(searchTerm) ||
+                        (r.description && r.description.toLowerCase().includes(searchTerm)) ||
+                        (r.cuisine_type && r.cuisine_type.toLowerCase().includes(searchTerm))
+                    );
+
+                    if (filtered.length > 0) {
+                        select.innerHTML = '<option value="">-- Select a recipe --</option>' +
+                            filtered.map(r => `<option value="${r.id}">${r.title}</option>`).join('');
+                    } else {
+                        select.innerHTML = '<option value="">No recipes found matching "' + searchTerm + '"</option>';
+                    }
+                }
+            },
+
+            async saveRecipeToEvent() {
+                const recipeId = document.getElementById('recipeSelect').value;
+                const courseType = document.getElementById('courseType').value;
+
+                if (!recipeId) {
+                    alert('Please select a recipe');
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/.netlify/functions/event-recipes', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${this.dropboxAccessToken}`
+                        },
+                        body: JSON.stringify({
+                            event_id: this.eventId,
+                            recipe_id: recipeId,
+                            course_type: courseType
+                        })
+                    });
+
+                    if (response.ok) {
+                        this.closeModal('addRecipeModal');
+                        localStorage.removeItem('pendingRecipeForEvent');
+                        await this.loadEvent();
+                    } else {
+                        const errorData = await response.json();
+                        alert('Failed to add recipe: ' + (errorData.error || 'Unknown error'));
+                    }
+                } catch (error) {
+                    alert('Error: ' + error.message);
+                }
+            },
+
+            async removeRecipe(recipeId) {
+                if (!confirm('Remove this recipe from the event?')) return;
+
+                try {
+                    const response = await fetch(`/.netlify/functions/event-recipes?event_id=${this.eventId}&recipe_id=${recipeId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${this.dropboxAccessToken}`
+                        }
+                    });
+
+                    if (response.ok) {
+                        await this.loadEvent();
+                    } else {
+                        const errorData = await response.json();
+                        alert('Failed to remove recipe: ' + (errorData.error || 'Unknown error'));
+                    }
+                } catch (error) {
+                    alert('Error: ' + error.message);
+                }
+            },
+
+            async generateEmail() {
+                try {
+                    const response = await fetch(`/.netlify/functions/generate-email?id=${this.eventId}`, {
+                        headers: {
+                            'Authorization': `Bearer ${this.dropboxAccessToken}`
+                        }
+                    });
+                    if (response.ok) {
+                        const html = await response.text();
+                        document.getElementById('emailHTML').value = html;
+                        document.getElementById('emailPreview').innerHTML = html;
+                        document.getElementById('emailModal').classList.add('active');
+                    } else {
+                        const errorData = await response.json();
+                        alert('Failed to generate email: ' + (errorData.error || 'Unknown error'));
+                    }
+                } catch (error) {
+                    alert('Error: ' + error.message);
+                }
+            },
+
+            openEmailInNewWindow() {
+                const html = document.getElementById('emailHTML').value;
+                const newWindow = window.open('', '_blank');
+                newWindow.document.write(html);
+                newWindow.document.close();
+            },
+
+            copyRenderedEmail() {
+                const preview = document.getElementById('emailPreview');
+                const range = document.createRange();
+                range.selectNodeContents(preview);
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(range);
+
+                try {
+                    document.execCommand('copy');
+                    // Show brief success indication
+                    const btn = event.target;
+                    const originalText = btn.textContent;
+                    btn.textContent = '✓ Copied!';
+                    btn.style.background = '#27ae60';
+                    setTimeout(() => {
+                        btn.textContent = originalText;
+                        btn.style.background = '';
+                    }, 2000);
+                } catch (err) {
+                    alert('Copy failed. Please try "Open in New Window" instead.');
+                }
+
+                selection.removeAllRanges();
+            },
+
+            copyEmailHTML() {
+                const textarea = document.getElementById('emailHTML');
+                textarea.select();
+                document.execCommand('copy');
+
+                // Show brief success indication
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = '✓ Copied!';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 2000);
+            },
+
+            async deleteEvent() {
+                if (!confirm('Are you sure you want to delete this event? This cannot be undone.')) return;
+
+                try {
+                    const response = await fetch(`/.netlify/functions/create-event?id=${this.eventId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${this.dropboxAccessToken}`
+                        }
+                    });
+
+                    if (response.ok) {
+                        window.location.href = 'events.html';
+                    } else {
+                        let errorMessage = 'Unknown error';
+                        try {
+                            const errorData = await response.json();
+                            errorMessage = errorData.error || errorMessage;
+                        } catch (e) {
+                            // Response wasn't JSON, use status text
+                            errorMessage = response.statusText || `HTTP ${response.status}`;
+                        }
+                        alert('Failed to delete event: ' + errorMessage);
+                    }
+                } catch (error) {
+                    alert('Error: ' + error.message);
+                }
+            },
+
+            closeModal(modalId) {
+                document.getElementById(modalId).classList.remove('active');
+            },
+
+            checkPendingRecipe() {
+                const pendingRecipeId = localStorage.getItem('pendingRecipeForEvent');
+                if (pendingRecipeId) {
+                    // Auto-select the recipe
+                    setTimeout(() => {
+                        this.addRecipe();
+                        const select = document.getElementById('recipeSelect');
+                        select.value = pendingRecipeId;
+                    }, 500);
+                }
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => app.init());
+    </script>
+</body>
+</html>

@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Respond to Event - Fergi Cooking</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #2c3e50;
+            min-height: 100vh;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .content {
+            padding: 2rem;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid #28a745;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: all 0.3s;
+            width: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .event-info {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+        }
+
+        .event-info h3 {
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+        }
+
+        .event-meta {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+
+        .summary {
+            background: #e7f3ff;
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-top: 2rem;
+        }
+
+        .summary h3 {
+            color: #0066cc;
+            margin-bottom: 1rem;
+        }
+
+        .summary-item {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .summary-item:last-child {
+            border-bottom: none;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎉 Event Response</h1>
+            <p id="eventName">Loading...</p>
+        </div>
+
+        <div class="content" id="content">
+            <div class="loading">
+                <p>Loading event details...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const app = {
+            eventId: null,
+            recipeId: null,
+            variantId: null,
+            selectionType: null,
+            category: null,
+            guestEmail: null,
+            event: null,
+            recipeDetails: null,
+
+            async init() {
+                const urlParams = new URLSearchParams(window.location.search);
+                this.eventId = urlParams.get('event');
+                this.recipeId = urlParams.get('recipe');
+                this.variantId = urlParams.get('variant');
+                this.selectionType = urlParams.get('type');
+                this.category = urlParams.get('category');
+                this.guestEmail = urlParams.get('guest');
+
+                if (!this.eventId) {
+                    this.showError('No event specified');
+                    return;
+                }
+
+                await this.loadEvent();
+
+                // Check if this is a quick selection (from email link)
+                if (this.recipeId && this.selectionType) {
+                    await this.handleQuickSelection();
+                } else if (this.selectionType === 'volunteer' && this.category) {
+                    await this.handleVolunteer();
+                } else if (this.selectionType === 'dietary') {
+                    this.showDietaryForm();
+                } else if (this.selectionType === 'own_dish') {
+                    this.showOwnDishForm();
+                } else {
+                    // Show full response form
+                    this.showFullForm();
+                }
+            },
+
+            async loadEvent() {
+                try {
+                    const response = await fetch(`/.netlify/functions/get-events?id=${this.eventId}`);
+                    if (response.ok) {
+                        this.event = await response.json();
+                        document.getElementById('eventName').textContent = this.event.name;
+                    } else {
+                        this.showError('Event not found');
+                    }
+                } catch (error) {
+                    this.showError('Error loading event');
+                }
+            },
+
+            async handleQuickSelection() {
+                // Show loading message
+                const content = document.getElementById('content');
+                content.innerHTML = `
+                    <div class="loading">
+                        <p>Loading recipe details...</p>
+                    </div>
+                `;
+
+                // Fetch recipe details to show in the form - MUST wait for this to complete
+                const loaded = await this.loadRecipeDetails();
+
+                if (!loaded || !this.recipeDetails) {
+                    console.error('💥 CRITICAL: Recipe failed to load!');
+                    this.showError(`Unable to load recipe details. Please try again or contact support. (Recipe ID: ${this.recipeId})`);
+                    return;
+                }
+
+                console.log('✅ Recipe ready to display:', this.recipeDetails.title);
+
+                if (!this.guestEmail || this.guestEmail === '{GUEST_EMAIL}') {
+                    // Need to collect email first
+                    this.showComprehensiveResponseForm();
+                    return;
+                }
+
+                // Record the selection
+                const success = await this.recordSelection({
+                    event_id: this.eventId,
+                    guest_email: this.guestEmail,
+                    recipe_id: this.recipeId,
+                    variant_id: this.variantId,
+                    selection_type: this.selectionType
+                });
+
+                if (success) {
+                    this.showSuccessAndSummary();
+                }
+            },
+
+            async loadRecipeDetails() {
+                if (!this.recipeId) {
+                    console.log('No recipe ID to load');
+                    return false;
+                }
+
+                console.log('🔍 Loading recipe details for ID:', this.recipeId);
+
+                // Strategy 1: Try get-recipe endpoint
+                try {
+                    console.log('📡 Trying get-recipe endpoint...');
+                    const response = await fetch(`/.netlify/functions/get-recipe/${this.recipeId}`);
+                    console.log('Response status:', response.status);
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.recipe) {
+                            this.recipeDetails = data.recipe;
+                            console.log('✅ SUCCESS via get-recipe:', this.recipeDetails.title);
+                            return true;
+                        }
+                    } else {
+                        console.warn('❌ get-recipe failed:', response.status, await response.text());
+                    }
+                } catch (error) {
+                    console.warn('❌ get-recipe error:', error.message);
+                }
+
+                // Strategy 2: Fallback to loading all recipes and finding this one
+                try {
+                    console.log('🔄 Fallback: Loading from get-recipes endpoint...');
+                    const response = await fetch('/.netlify/functions/get-recipes');
+
+                    if (response.ok) {
+                        const recipes = await response.json();
+                        console.log(`Found ${recipes.length} recipes, searching for ID ${this.recipeId}...`);
+
+                        const recipe = recipes.find(r => r.id == this.recipeId);
+
+                        if (recipe) {
+                            this.recipeDetails = recipe;
+                            console.log('✅ SUCCESS via get-recipes fallback:', this.recipeDetails.title);
+                            return true;
+                        } else {
+                            console.error(`❌ Recipe ID ${this.recipeId} not found in ${recipes.length} recipes`);
+                        }
+                    } else {
+                        console.error('❌ get-recipes failed:', response.status);
+                    }
+                } catch (error) {
+                    console.error('❌ Fallback error:', error.message);
+                }
+
+                console.error('💥 FAILED to load recipe after all attempts');
+                return false;
+            },
+
+            async handleVolunteer() {
+                // Always show form to collect dish name (and email if not provided)
+                this.showEmailCollectionForVolunteer();
+            },
+
+            async recordSelection(data) {
+                try {
+                    const response = await fetch('/.netlify/functions/record-selection', {
+                        method: 'POST',
+                        body: JSON.stringify(data)
+                    });
+
+                    return response.ok;
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error recording selection: ' + error.message);
+                    return false;
+                }
+            },
+
+            showEmailCollectionForm() {
+                this.showComprehensiveResponseForm();
+            },
+
+            showComprehensiveResponseForm() {
+                // CRITICAL: Recipe details MUST be loaded before calling this function
+                if (!this.recipeDetails) {
+                    console.error('💥 FATAL: showComprehensiveResponseForm called without recipe details!');
+                    this.showError('Recipe details not loaded. Please try refreshing the page.');
+                    return;
+                }
+
+                // Get recipe name - ONLY show the title/name, nothing else
+                const recipeName = this.recipeDetails.title || this.recipeDetails.name || 'this recipe';
+                const recipeDesc = this.recipeDetails.description || '';
+
+                console.log('🎯 Displaying recipe:', recipeName);
+
+                // Determine heading based on selection type
+                let headingIcon = '❤️';
+                let headingText = 'You Selected:';
+                if (this.selectionType === 'will_bring') {
+                    headingIcon = '🍽️';
+                    headingText = 'You will bring:';
+                } else if (this.selectionType === 'prefer') {
+                    headingIcon = '❤️';
+                    headingText = 'You prefer:';
+                }
+
+                const hasGuestList = this.event.guest_list && this.event.guest_list.length > 0;
+
+                const content = document.getElementById('content');
+                content.innerHTML = `
+                    <div class="event-info">
+                        <h3>${this.event.name}</h3>
+                        <div class="event-meta">
+                            ${this.event.event_date ? `📅 ${new Date(this.event.event_date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}` : ''}
+                            ${this.event.event_time ? ` • 🕐 ${this.event.event_time}` : ''}
+                            ${this.event.location ? `<br>📍 ${this.event.location}` : ''}
+                        </div>
+                    </div>
+
+                    <div style="background: #e7f3ff; padding: 1.5rem; border-radius: 10px; margin-bottom: 1.5rem;">
+                        <h3 style="color: #0066cc; margin-top: 0;">${headingIcon} ${headingText}</h3>
+                        <p style="font-size: 1.2rem; font-weight: bold; color: #2c3e50; margin: 0.5rem 0;">${recipeName}</p>
+                        ${recipeDesc ? `<p style="color: #555; margin: 0.5rem 0;">${recipeDesc}</p>` : ''}
+                    </div>
+
+                    <p style="margin-bottom: 1.5rem; color: #555;"><strong>Please complete your response:</strong></p>
+
+                    ${hasGuestList ? `
+                        <div class="form-group">
+                            <label for="guestSelect">Who are you? *</label>
+                            <select id="guestSelect" onchange="app.selectGuest()" style="padding: 0.8rem; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem;">
+                                <option value="">-- Select your name --</option>
+                                ${this.event.guest_list.map(guest =>
+                                    `<option value="${guest.email}" data-name="${guest.name}">${guest.name} (${guest.email})</option>`
+                                ).join('')}
+                                <option value="other">Someone else (enter email below)</option>
+                            </select>
+                            <small style="color: #666;">👥 ${this.event.guest_list.length} guest${this.event.guest_list.length !== 1 ? 's' : ''} invited to this event</small>
+                        </div>
+
+                        <div id="manualEmailFields" style="display: none;">
+                            <div class="form-group">
+                                <label for="guestEmail">Your Email Address *</label>
+                                <input type="email" id="guestEmail" required placeholder="you@example.com"
+                                       value="${this.guestEmail && this.guestEmail !== '{GUEST_EMAIL}' ? this.guestEmail : ''}">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="guestName">Your Name</label>
+                                <input type="text" id="guestName" placeholder="Your name">
+                            </div>
+                        </div>
+                    ` : `
+                        <div class="form-group">
+                            <label for="guestEmail">Your Email Address *</label>
+                            <input type="email" id="guestEmail" required placeholder="you@example.com"
+                                   value="${this.guestEmail && this.guestEmail !== '{GUEST_EMAIL}' ? this.guestEmail : ''}">
+                            <small style="color: #666;">We'll use this to track your responses</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="guestName">Your Name (optional)</label>
+                            <input type="text" id="guestName" placeholder="Your name">
+                        </div>
+                    `}
+
+                    <div class="form-group">
+                        <label for="willBring">
+                            <input type="checkbox" id="willBring" onchange="app.toggleBringFields()" style="margin-right: 0.5rem;">
+                            I'll bring this dish!
+                        </label>
+                    </div>
+
+                    <div id="bringFields" style="display: none; margin-left: 1.5rem; padding-left: 1rem; border-left: 3px solid #667eea;">
+                        <div class="form-group">
+                            <label for="bringDetails">What will you bring? (optional)</label>
+                            <textarea id="bringDetails" rows="2" placeholder="Leave blank to bring this recipe, or enter a different dish (e.g., 'Fish', 'Caesar Salad')"></textarea>
+                            <small style="color: #666; font-size: 0.85rem; margin-top: 0.25rem; display: block;">
+                                If you're bringing something different, type it here. Otherwise we'll assume you're bringing the recipe you selected.
+                            </small>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dietaryNotes">Any dietary restrictions? (optional)</label>
+                        <textarea id="dietaryNotes" rows="2" placeholder="E.g., vegetarian, gluten-free, nut allergy..."></textarea>
+                    </div>
+
+                    <button class="btn" onclick="app.saveComprehensiveResponse()">Submit Response</button>
+                `;
+            },
+
+            selectGuest() {
+                const select = document.getElementById('guestSelect');
+                const selectedOption = select.options[select.selectedIndex];
+                const manualFields = document.getElementById('manualEmailFields');
+
+                if (select.value === 'other') {
+                    // Show manual entry fields
+                    manualFields.style.display = 'block';
+                    document.getElementById('guestEmail').value = '';
+                    document.getElementById('guestName').value = '';
+                } else if (select.value) {
+                    // Hide manual fields and use selected guest info
+                    manualFields.style.display = 'none';
+                    // Email and name will be read from the select value when saving
+                } else {
+                    // Nothing selected
+                    manualFields.style.display = 'none';
+                }
+            },
+
+            toggleBringFields() {
+                const checkbox = document.getElementById('willBring');
+                const fields = document.getElementById('bringFields');
+                fields.style.display = checkbox.checked ? 'block' : 'none';
+            },
+
+            async saveWithEmail() {
+                await this.saveComprehensiveResponse();
+            },
+
+            async saveComprehensiveResponse() {
+                let email, name;
+
+                // Check if guest list dropdown exists
+                const guestSelect = document.getElementById('guestSelect');
+                if (guestSelect) {
+                    if (!guestSelect.value) {
+                        alert('Please select who you are from the dropdown');
+                        return;
+                    }
+
+                    if (guestSelect.value === 'other') {
+                        // Manual entry
+                        email = document.getElementById('guestEmail').value;
+                        name = document.getElementById('guestName').value;
+                    } else {
+                        // Selected from list
+                        email = guestSelect.value;
+                        name = guestSelect.options[guestSelect.selectedIndex].getAttribute('data-name');
+                    }
+                } else {
+                    // No guest list, use manual fields
+                    email = document.getElementById('guestEmail').value;
+                    name = document.getElementById('guestName').value;
+                }
+
+                if (!email) {
+                    alert('Please enter your email address');
+                    return;
+                }
+
+                const willBring = document.getElementById('willBring')?.checked || false;
+                const bringDetails = document.getElementById('bringDetails')?.value || '';
+                const dietaryNotes = document.getElementById('dietaryNotes')?.value || '';
+
+                this.guestEmail = email;
+
+                // First, record the preference
+                let success = await this.recordSelection({
+                    event_id: this.eventId,
+                    guest_email: email,
+                    guest_name: name,
+                    recipe_id: this.recipeId,
+                    variant_id: this.variantId,
+                    selection_type: this.selectionType
+                });
+
+                // If they'll bring it, record that too
+                if (willBring && success) {
+                    // If they specified what they'll bring in bringDetails, use THAT as the dish name
+                    // Otherwise, use the recipe name
+                    let dishName;
+                    let dishDescription = '';
+
+                    if (bringDetails && bringDetails.trim()) {
+                        // User specified what they're bringing - use that as the name
+                        dishName = bringDetails.trim();
+                        dishDescription = ''; // The detail IS the name
+                    } else {
+                        // No details specified - they're bringing the recipe itself
+                        dishName = this.recipeDetails ?
+                            (this.recipeDetails.title || this.recipeDetails.name || 'selected recipe') :
+                            'selected recipe';
+                        dishDescription = '';
+                    }
+
+                    console.log('Recording will_bring - Dish:', dishName, 'Description:', dishDescription);
+                    success = await this.recordSelection({
+                        event_id: this.eventId,
+                        guest_email: email,
+                        guest_name: name,
+                        selection_type: 'will_bring',
+                        bringing_own_dish_name: dishName,
+                        bringing_own_dish_description: dishDescription
+                    });
+                }
+
+                // If they have dietary restrictions, record those
+                if (dietaryNotes && success) {
+                    success = await this.recordSelection({
+                        event_id: this.eventId,
+                        guest_email: email,
+                        guest_name: name,
+                        selection_type: 'dietary_restriction',
+                        notes: dietaryNotes
+                    });
+                }
+
+                if (success) {
+                    this.showSuccessAndSummary();
+                }
+            },
+
+            showDietaryForm() {
+                if (!this.guestEmail || this.guestEmail === '{GUEST_EMAIL}') {
+                    this.showEmailCollectionForDietary();
+                    return;
+                }
+
+                const content = document.getElementById('content');
+                content.innerHTML = `
+                    <div class="event-info">
+                        <h3>${this.event.name}</h3>
+                    </div>
+
+                    <h3 style="margin-bottom: 1rem;">🥗 Dietary Restrictions</h3>
+                    <p style="margin-bottom: 1.5rem; color: #555;">Let us know about any dietary restrictions or allergies:</p>
+
+                    <div class="form-group">
+                        <label for="dietaryNotes">Dietary Restrictions *</label>
+                        <textarea id="dietaryNotes" rows="4" placeholder="E.g., vegetarian, gluten-free, nut allergy, etc."></textarea>
+                    </div>
+
+                    <button class="btn" onclick="app.saveDietary()">Save</button>
+                `;
+            },
+
+            showEmailCollectionForDietary() {
+                const content = document.getElementById('content');
+                content.innerHTML = `
+                    <div class="event-info">
+                        <h3>${this.event.name}</h3>
+                    </div>
+
+                    <h3 style="margin-bottom: 1rem;">🥗 Dietary Restrictions</h3>
+
+                    <div class="form-group">
+                        <label for="guestEmail">Your Email *</label>
+                        <input type="email" id="guestEmail" required placeholder="you@example.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="guestName">Your Name (optional)</label>
+                        <input type="text" id="guestName" placeholder="Your name">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dietaryNotes">Dietary Restrictions *</label>
+                        <textarea id="dietaryNotes" rows="4" placeholder="E.g., vegetarian, gluten-free, nut allergy, etc."></textarea>
+                    </div>
+
+                    <button class="btn" onclick="app.saveDietary()">Save</button>
+                `;
+            },
+
+            async saveDietary() {
+                const notes = document.getElementById('dietaryNotes').value;
+                if (!notes) {
+                    alert('Please enter your dietary restrictions');
+                    return;
+                }
+
+                let email = this.guestEmail;
+                let name = null;
+
+                if (!email || email === '{GUEST_EMAIL}') {
+                    email = document.getElementById('guestEmail').value;
+                    name = document.getElementById('guestName').value;
+                    if (!email) {
+                        alert('Please enter your email');
+                        return;
+                    }
+                    this.guestEmail = email;
+                }
+
+                const success = await this.recordSelection({
+                    event_id: this.eventId,
+                    guest_email: email,
+                    guest_name: name,
+                    selection_type: 'dietary_restriction',
+                    notes: notes
+                });
+
+                if (success) {
+                    this.showSuccessAndSummary();
+                }
+            },
+
+            showOwnDishForm() {
+                if (!this.guestEmail || this.guestEmail === '{GUEST_EMAIL}') {
+                    this.showEmailCollectionForOwnDish();
+                    return;
+                }
+
+                const content = document.getElementById('content');
+                content.innerHTML = `
+                    <div class="event-info">
+                        <h3>${this.event.name}</h3>
+                    </div>
+
+                    <h3 style="margin-bottom: 1rem;">🍽️ Your Own Dish</h3>
+                    <p style="margin-bottom: 1.5rem; color: #555;">Tell us what you're planning to bring:</p>
+
+                    <div class="form-group">
+                        <label for="dishName">Dish Name *</label>
+                        <input type="text" id="dishName" placeholder="E.g., Potato Salad">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dishDescription">Description (optional)</label>
+                        <textarea id="dishDescription" rows="3" placeholder="Brief description of your dish"></textarea>
+                    </div>
+
+                    <button class="btn" onclick="app.saveOwnDish()">Save</button>
+                `;
+            },
+
+            showEmailCollectionForOwnDish() {
+                const content = document.getElementById('content');
+                content.innerHTML = `
+                    <div class="event-info">
+                        <h3>${this.event.name}</h3>
+                    </div>
+
+                    <h3 style="margin-bottom: 1rem;">🍽️ Your Own Dish</h3>
+
+                    <div class="form-group">
+                        <label for="guestEmail">Your Email *</label>
+                        <input type="email" id="guestEmail" required placeholder="you@example.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="guestName">Your Name (optional)</label>
+                        <input type="text" id="guestName" placeholder="Your name">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dishName">Dish Name *</label>
+                        <input type="text" id="dishName" placeholder="E.g., Potato Salad">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dishDescription">Description (optional)</label>
+                        <textarea id="dishDescription" rows="3" placeholder="Brief description"></textarea>
+                    </div>
+
+                    <button class="btn" onclick="app.saveOwnDish()">Save</button>
+                `;
+            },
+
+            showEmailCollectionForVolunteer() {
+                const categoryEmojis = {
+                    appetizer: '🥗',
+                    salad: '🥬',
+                    main: '🍖',
+                    side: '🥔',
+                    dessert: '🍰',
+                    beverage: '🍷'
+                };
+                const categoryNames = {
+                    appetizer: 'Appetizer',
+                    salad: 'Salad',
+                    main: 'Main Course',
+                    side: 'Side Dish',
+                    dessert: 'Dessert',
+                    beverage: 'Beverage'
+                };
+
+                const hasEmail = this.guestEmail && this.guestEmail !== '{GUEST_EMAIL}';
+                const content = document.getElementById('content');
+                content.innerHTML = `
+                    <div class="event-info">
+                        <h3>${this.event.name}</h3>
+                    </div>
+
+                    <h3 style="margin-bottom: 1rem;">${categoryEmojis[this.category]} Volunteer to Bring: ${categoryNames[this.category]}</h3>
+                    <p style="margin-bottom: 1.5rem; color: #555;">Thank you for volunteering! Please enter your information:</p>
+
+                    <div class="form-group">
+                        <label for="guestEmail">Your Email *</label>
+                        <input type="email" id="guestEmail" required placeholder="you@example.com" value="${hasEmail ? this.guestEmail : ''}">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="guestName">Your Name (optional)</label>
+                        <input type="text" id="guestName" placeholder="Your name">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dishName">What dish will you bring? *</label>
+                        <input type="text" id="dishName" required placeholder="e.g., Caesar Salad, Chocolate Cake, etc.">
+                    </div>
+
+                    <button class="btn" onclick="app.saveVolunteer()">Confirm Volunteer</button>
+                `;
+            },
+
+            async saveVolunteer() {
+                const email = document.getElementById('guestEmail').value;
+                const name = document.getElementById('guestName').value;
+                const dishName = document.getElementById('dishName').value;
+
+                if (!email) {
+                    alert('Please enter your email');
+                    return;
+                }
+
+                if (!dishName) {
+                    alert('Please enter the dish you will bring');
+                    return;
+                }
+
+                this.guestEmail = email;
+
+                const categoryNames = {
+                    appetizer: 'Appetizer',
+                    salad: 'Salad',
+                    main: 'Main Course',
+                    side: 'Side Dish',
+                    dessert: 'Dessert',
+                    beverage: 'Beverage'
+                };
+
+                const success = await this.recordSelection({
+                    event_id: this.eventId,
+                    guest_email: email,
+                    guest_name: name,
+                    selection_type: 'volunteer_category',
+                    notes: `${categoryNames[this.category]}: ${dishName}`
+                });
+
+                if (success) {
+                    this.showSuccessAndSummary();
+                }
+            },
+
+            async saveOwnDish() {
+                const dishName = document.getElementById('dishName').value;
+                if (!dishName) {
+                    alert('Please enter the dish name');
+                    return;
+                }
+
+                let email = this.guestEmail;
+                let name = null;
+
+                if (!email || email === '{GUEST_EMAIL}') {
+                    email = document.getElementById('guestEmail').value;
+                    name = document.getElementById('guestName').value;
+                    if (!email) {
+                        alert('Please enter your email');
+                        return;
+                    }
+                    this.guestEmail = email;
+                }
+
+                const dishDescription = document.getElementById('dishDescription').value;
+
+                const success = await this.recordSelection({
+                    event_id: this.eventId,
+                    guest_email: email,
+                    guest_name: name,
+                    selection_type: 'will_bring',
+                    bringing_own_dish_name: dishName,
+                    bringing_own_dish_description: dishDescription
+                });
+
+                if (success) {
+                    this.showSuccessAndSummary();
+                }
+            },
+
+            async showSuccessAndSummary() {
+                // Load all selections for this guest
+                try {
+                    const response = await fetch(`/.netlify/functions/record-selection?event_id=${this.eventId}&guest_email=${this.guestEmail}`);
+                    const selections = response.ok ? await response.json() : [];
+
+                    // Check if we should show guest selector
+                    const hasGuestList = this.event.guest_list && this.event.guest_list.length > 0;
+                    const showGuestSelector = hasGuestList && (!this.guestEmail || this.guestEmail === '{GUEST_EMAIL}');
+
+                    const content = document.getElementById('content');
+                    content.innerHTML = `
+                        <div class="success-message">
+                            <h3 style="margin-bottom: 0.5rem;">✅ Thank You!</h3>
+                            <p>Your response has been recorded successfully.</p>
+                        </div>
+
+                        <div class="event-info">
+                            <h3>${this.event.name}</h3>
+                            <div class="event-meta">
+                                ${this.event.event_date ? `📅 ${new Date(this.event.event_date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}` : ''}
+                                ${this.event.event_time ? ` • 🕐 ${this.event.event_time}` : ''}
+                                ${this.event.location ? `<br>📍 ${this.event.location}` : ''}
+                            </div>
+                        </div>
+
+                        ${showGuestSelector ? `
+                            <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 1.5rem; border-radius: 10px; margin-bottom: 1.5rem;">
+                                <h4 style="margin: 0 0 1rem 0; color: #856404;">👤 Who are you?</h4>
+                                <p style="margin: 0 0 1rem 0; color: #856404;">Select your name to see all your responses:</p>
+                                <select id="guestIdentitySelect" onchange="app.identifyGuest()" style="width: 100%; padding: 0.8rem; border: 2px solid #ffc107; border-radius: 8px; font-size: 1rem;">
+                                    <option value="">-- Select your name --</option>
+                                    ${this.event.guest_list.map(guest =>
+                                        `<option value="${guest.email}">${guest.name} (${guest.email})</option>`
+                                    ).join('')}
+                                </select>
+                            </div>
+                        ` : ''}
+
+                        <div class="summary">
+                            <h3>Your Responses for This Event</h3>
+                            ${selections.length > 0 ? selections.map(sel => {
+                                let icon = '📌';
+                                let heading = '';
+                                let subtext = '';
+
+                                if (sel.selection_type === 'prefer') {
+                                    icon = '❤️';
+                                    heading = `You prefer: ${sel.recipe_title || 'Unknown dish'}`;
+                                    subtext = sel.recipe_description || '';
+                                } else if (sel.selection_type === 'will_bring') {
+                                    icon = '🍽️';
+                                    heading = `You will bring: ${sel.bringing_own_dish_name || sel.recipe_title || 'Unknown dish'}`;
+                                    subtext = sel.bringing_own_dish_description || '';
+                                } else if (sel.selection_type === 'dietary_restriction') {
+                                    icon = '🥗';
+                                    heading = 'Dietary restrictions';
+                                    subtext = sel.notes || '';
+                                } else if (sel.selection_type === 'volunteer_category') {
+                                    icon = '🤝';
+                                    heading = 'Volunteered to bring';
+                                    subtext = sel.notes || '';
+                                }
+
+                                return `
+                                    <div class="summary-item">
+                                        <div style="display: flex; align-items: start; gap: 1rem;">
+                                            <span style="font-size: 1.8rem;">${icon}</span>
+                                            <div style="flex: 1;">
+                                                <div style="color: #2c3e50; font-size: 1.1rem; font-weight: 600; margin-bottom: 0.25rem;">
+                                                    ${heading}
+                                                </div>
+                                                ${sel.variant_name ? `<div style="color: #666; font-size: 0.95rem; font-style: italic; margin-bottom: 0.25rem;">${sel.variant_name}</div>` : ''}
+                                                ${subtext ? `<div style="color: #555; font-size: 0.95rem; line-height: 1.5; margin-top: 0.5rem;">${subtext}</div>` : ''}
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('') : '<p style="color: #999;">No responses yet. Click the links in the email to add your preferences!</p>'}
+                        </div>
+
+                        <div style="margin-top: 2rem; padding: 1.5rem; background: #f8f9fa; border-radius: 10px; text-align: center;">
+                            <p style="margin: 0; color: #555; line-height: 1.6;">
+                                <strong>Want to update your responses?</strong><br>
+                                Simply click the links in the email again to add more preferences, volunteer for additional categories, or update your dietary restrictions.
+                            </p>
+                        </div>
+                    `;
+                } catch (error) {
+                    console.error('Error loading summary:', error);
+                }
+            },
+
+            identifyGuest() {
+                const select = document.getElementById('guestIdentitySelect');
+                if (select && select.value) {
+                    this.guestEmail = select.value;
+                    // Reload the page to show their responses
+                    this.showSuccessAndSummary();
+                }
+            },
+
+            showFullForm() {
+                // For future: show all recipes and allow multiple selections
+                this.showSuccessAndSummary();
+            },
+
+            showError(message) {
+                const content = document.getElementById('content');
+                content.innerHTML = `
+                    <div style="background: #f8d7da; color: #721c24; padding: 1.5rem; border-radius: 10px; text-align: center;">
+                        <h3>⚠️ Error</h3>
+                        <p>${message}</p>
+                    </div>
+                `;
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => app.init());
+    </script>
+</body>
+</html>
