@@ -243,20 +243,40 @@ netlify dev
 
 | Date | Version | Description |
 |------|---------|-------------|
-| Nov 2, 2025 | v1.1 | Updated recipe instructions to use explicit ingredients |
-| Nov 1, 2025 | v1.0 | Initial deployment with recipe collection |
+| Nov 3, 2025 | v3.0.0 | 🎉 MAJOR: AI recipe import, contributor management, event planning, Dropbox migration |
+| Nov 2, 2025 | v2.8.0-2.8.1 | API endpoint fixes, custom dish name handling, recipe display improvements |
+| Nov 2, 2025 | v2.7.0 | Event management system with guest responses |
+| Nov 1, 2025 | v2.0.0 | Janet Mason's Cookbook integration (85 recipes) |
+| Nov 1, 2025 | v1.1 | Updated recipe instructions to use explicit ingredients |
+| Oct 30, 2025 | v1.0 | Initial deployment with recipe collection (37 recipes) |
+
+See [CHANGELOG.md](CHANGELOG.md) for complete version history.
 
 ---
 
 ## Environment Variables
 
-Currently: None required
+**Required for v3.0.0:**
+- `ANTHROPIC_API_KEY` - Claude API key for recipe formatting ⚠️ **CRITICAL**
+- `DROPBOX_APP_KEY` - Dropbox application key
+- `DROPBOX_APP_SECRET` - Dropbox application secret
+- `DROPBOX_REFRESH_TOKEN` - Dropbox OAuth refresh token (auto-refreshes access tokens)
 
-If you add API keys or secrets in the future:
+**Set via Netlify Dashboard:**
+1. Go to https://app.netlify.com/projects/fergi-cooking/settings/env
+2. Add each environment variable
+3. Redeploy functions if changed
+
+**Or via CLI:**
 ```bash
-netlify env:set KEY_NAME value
+netlify env:set ANTHROPIC_API_KEY "your_key_here"
+netlify env:set DROPBOX_APP_KEY "your_key_here"
+netlify env:set DROPBOX_APP_SECRET "your_secret_here"
+netlify env:set DROPBOX_REFRESH_TOKEN "your_token_here"
 netlify env:list
 ```
+
+**Important:** Without `ANTHROPIC_API_KEY`, the recipe import wizard's "Format with AI" feature will not work.
 
 ---
 
@@ -336,6 +356,9 @@ When user asks to "deploy to Netlify":
 
 ---
 
-**Last Updated:** November 2, 2025
+**Last Updated:** November 3, 2025
+**Version:** v3.0.0
 **Site URL:** https://fergi-cooking.netlify.app
 **Status:** ✓ Active and deployed
+**Functions:** 17 serverless functions deployed
+**Data Storage:** Dropbox (`/Apps/Reference Refinement/`)
