@@ -378,6 +378,13 @@
             <h2>Step 1: Import Recipe</h2>
 
             <div class="import-options">
+                <!-- NEW v4.0: Camera Capture for Mobile -->
+                <button class="option-btn camera-option" id="cameraBtn" onclick="app.selectCamera()" style="display:none;">
+                    <span style="font-size: 3rem;">📸</span>
+                    <span>Take Photo</span>
+                    <small style="font-size: 0.9rem; opacity: 0.8;">Snap a recipe card or page</small>
+                </button>
+
                 <button class="option-btn" id="uploadFileBtn" onclick="app.selectFileUpload()">
                     <span style="font-size: 3rem;">📎</span>
                     <span>Upload File</span>
@@ -391,6 +398,10 @@
                 </button>
             </div>
 
+            <!-- Camera input (mobile) -->
+            <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none;" onchange="app.handleFileSelect(event)">
+
+            <!-- File input (desktop) -->
             <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.pages,.jpg,.jpeg,.png,.txt" style="display:none;" onchange="app.handleFileSelect(event)">
 
             <div id="pasteArea" class="hidden">
@@ -426,6 +437,7 @@ Instructions:
                 <button class="btn btn-primary" style="margin-top: 1rem;" onclick="app.extractFileContents()">Extract Text & Continue →</button>
             </div>
 
+            <p class="help-text">✨ <strong>NEW:</strong> Take a photo of recipe cards or cookbook pages directly from your phone!</p>
             <p class="help-text">Accepted formats: PDF, Word, Pages, Images (JPG/PNG), Plain Text</p>
             <p class="help-text">Max file size: 10MB. Image processing may take 30-60 seconds.</p>
         </div>
@@ -609,6 +621,21 @@ Bake for 25-30 minutes until golden brown." oninput="app.updatePreview()"></text
 
             async init() {
                 await this.loadContributors();
+                this.detectMobileCamera();
+            },
+
+            detectMobileCamera() {
+                // Show camera button on mobile devices
+                const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+                const hasCamera = 'mediaDevices' in navigator && 'getUserMedia' in navigator.mediaDevices;
+
+                if (isMobile || hasCamera) {
+                    const cameraBtn = document.getElementById('cameraBtn');
+                    if (cameraBtn) {
+                        cameraBtn.style.display = 'flex';
+                        console.log('📸 Camera option enabled for mobile device');
+                    }
+                }
             },
 
             async loadContributors() {
@@ -646,6 +673,8 @@ Bake for 25-30 minutes until golden brown." oninput="app.updatePreview()"></text
             selectFileUpload() {
                 document.getElementById('uploadFileBtn').classList.add('selected');
                 document.getElementById('pasteTextBtn').classList.remove('selected');
+                const cameraBtn = document.getElementById('cameraBtn');
+                if (cameraBtn) cameraBtn.classList.remove('selected');
                 document.getElementById('pasteArea').classList.add('hidden');
                 document.getElementById('fileInput').click();
             },
@@ -653,8 +682,24 @@ Bake for 25-30 minutes until golden brown." oninput="app.updatePreview()"></text
             selectPasteText() {
                 document.getElementById('pasteTextBtn').classList.add('selected');
                 document.getElementById('uploadFileBtn').classList.remove('selected');
+                const cameraBtn = document.getElementById('cameraBtn');
+                if (cameraBtn) cameraBtn.classList.remove('selected');
                 document.getElementById('pasteArea').classList.remove('hidden');
                 document.getElementById('pasteTextarea').focus();
+            },
+
+            selectCamera() {
+                // NEW v4.0: Trigger camera capture
+                const cameraBtn = document.getElementById('cameraBtn');
+                if (cameraBtn) cameraBtn.classList.add('selected');
+                document.getElementById('uploadFileBtn').classList.remove('selected');
+                document.getElementById('pasteTextBtn').classList.remove('selected');
+                document.getElementById('pasteArea').classList.add('hidden');
+
+                // Trigger camera input
+                document.getElementById('cameraInput').click();
+
+                console.log('📸 Camera capture initiated');
             },
 
             handleFileSelect(event) {

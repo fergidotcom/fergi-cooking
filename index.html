@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fergi's Recipe Collection v3.0</title>
+    <title>Fergi's Recipe Collection v4.0</title>
     <style>
         * {
             margin: 0;
@@ -545,6 +545,98 @@
                 padding: 1rem;
             }
 
+            /* CRITICAL MOBILE MODAL FIX - v4.0 */
+            .modal {
+                padding: 0;
+                align-items: flex-start;
+            }
+
+            .modal-content {
+                max-width: 100%;
+                max-height: 100vh;
+                height: 100vh;
+                border-radius: 0;
+                padding: 1rem;
+                display: flex;
+                flex-direction: column;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .modal-close {
+                width: 44px;
+                height: 44px;
+                top: 0.5rem;
+                right: 0.5rem;
+                z-index: 100;
+                font-size: 1.8rem;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            /* Make recipe detail scrollable on mobile */
+            .recipe-detail {
+                overflow-y: auto;
+                flex: 1;
+                -webkit-overflow-scrolling: touch;
+                padding-bottom: 2rem;
+            }
+
+            /* Sticky header for mobile */
+            .recipe-detail-header {
+                position: sticky;
+                top: 0;
+                background: white;
+                z-index: 50;
+                padding: 1rem;
+                margin: -1rem -1rem 1rem -1rem;
+                border-bottom: 2px solid var(--accent-color);
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            }
+
+            /* Improve readability on mobile */
+            .recipe-detail h2 {
+                font-size: 1.5rem;
+                padding-right: 50px;
+                margin-bottom: 0.5rem;
+            }
+
+            .recipe-meta {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            /* Better section headers on mobile */
+            .recipe-section h3 {
+                font-size: 1.3rem;
+                margin-top: 1.5rem;
+            }
+
+            /* Make touch targets larger */
+            .recipe-detail button,
+            nav button {
+                min-height: 44px;
+                padding: 0.8rem 1rem;
+                font-size: 1rem;
+            }
+
+            /* Ingredients and instructions readable */
+            .recipe-ingredients li,
+            .recipe-instructions li {
+                font-size: 1rem;
+                line-height: 1.6;
+                padding: 0.5rem 0;
+            }
+
+            /* Button group stacks on mobile */
+            .btn-group {
+                flex-direction: column;
+            }
+
+            .btn-group button {
+                width: 100%;
+            }
+
             .form-row {
                 grid-template-columns: 1fr;
             }
@@ -719,7 +811,7 @@
 </head>
 <body>
     <header>
-        <h1>Fergi's Recipe Collection <span style="font-size: 0.6em; opacity: 0.8;">v3.1.6</span></h1>
+        <h1>Fergi's Recipe Collection <span style="font-size: 0.6em; opacity: 0.8;">v4.0.0</span></h1>
         <p>Your personal recipe database and cooking companion • Recipe Import & Contributor Management</p>
     </header>
 
