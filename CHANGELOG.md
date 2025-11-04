@@ -7,6 +7,73 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.1.0] - 2025-11-04
+
+### 🎉 MAJOR FEATURE - Mobile Cooking Mode
+
+**Status:** ✅ Deployed to Production
+**Live URL:** https://fergi-cooking.netlify.app
+**Session:** SESSION_SUMMARY_2025-11-03_V3.1_COOKING_MODE.md
+
+### Added
+
+#### Mobile-First Cooking Interface
+- **NEW:** `cooking.html` - Dedicated mobile cooking mode interface
+- Large, readable text (18-28px) - readable from 2 feet away
+- Single column layout optimized for phones
+- Ingredient checkboxes to mark off as you use them
+- Big step numbers in colored circles (40px)
+- Wake Lock API - keeps screen on while cooking!
+- Shareable URLs: `cooking.html?recipe_id=X`
+- Beautiful loading states and error handling
+- Print-friendly styles
+
+#### User Experience Improvements
+- "👨‍🍳 Cooking Mode" button added to recipe detail modal
+- Opens full-screen cooking interface in new tab
+- Prominent red gradient button (stands out)
+- Automatic recipe loading with fallback strategy
+- Clean, minimal UI perfect for kitchen use
+
+#### Backend Ready for Authentication (Phase 2)
+- **NEW:** `send-verification-code.js` - Email 6-digit verification codes
+- **NEW:** `verify-code.js` - Validate codes and create sessions
+- Passwordless email authentication system (backend complete)
+- Dropbox storage for verification codes and users
+- Session token generation
+- Ready for UI integration (next release)
+
+### Design Documentation
+- **NEW:** `DESIGN_SPEC_V3.1_USER_EVENTS_MOBILE.md` - Complete 3-phase specification
+  - Mobile cooking mode design (IMPLEMENTED ✅)
+  - Passwordless authentication design (Backend ready ⏳)
+  - Event segregation design (Planned 📋)
+
+### What Problem This Solves
+**Janet's Complaint:** "I can't read recipes on my phone while cooking!"
+
+**Solution:** Dedicated cooking mode with:
+- Text 2x larger than standard mobile view
+- Clear visual hierarchy (big numbers, bold quantities)
+- No screen timeout (Wake Lock API)
+- Minimal interaction required
+- Perfect for glancing at while cooking
+
+### New Netlify Functions
+- `send-verification-code.js` (178 lines) - Email verification
+- `verify-code.js` (210 lines) - Code validation & sessions
+
+### Total Functions: 19 (was 17)
+
+### Environment Variables (Optional for Phase 2)
+- `RESEND_API_KEY` - For email verification (Phase 2 feature)
+
+### Next Steps (Phases 2 & 3)
+- Phase 2: Add login UI, session management, user profiles
+- Phase 3: Event ownership, "My Events" filtering, access control
+
+---
+
 ## [3.0.0] - 2025-11-03
 
 ### 🎉 MAJOR RELEASE - Recipe Import System
