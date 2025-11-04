@@ -12,13 +12,30 @@ This file provides guidance to Claude Code (claude.ai/code) when working with th
 
 **Project Location:** `/Users/joeferguson/Library/CloudStorage/Dropbox/Fergi/Cooking`
 **Created:** October 30, 2025
-**Status:** ✓ Production - Deployed to Netlify (v3.0.0)
+**Status:** ✓ Production - Deployed to Netlify (v3.1.0)
 **Live URL:** https://fergi-cooking.netlify.app
-**Purpose:** Organize and manage recipe collection, create searchable recipe database, document family recipes, manage cooking events with guest preferences, import recipes with AI formatting, manage contributors
+**Cooking Mode:** https://fergi-cooking.netlify.app/cooking.html?recipe_id=5
+**Purpose:** Organize and manage recipe collection, create searchable recipe database, document family recipes, manage cooking events with guest preferences, import recipes with AI formatting, manage contributors, mobile cooking mode for Janet
 
-## 🆕 Recent Updates - November 3, 2025
+## 🆕 Recent Updates - November 4, 2025
 
-**v3.0.0 - MAJOR: Recipe Import System with Contributor Management:**
+**v3.1.0 - MOBILE COOKING MODE + Auth Backend:**
+- ✅ NEW: cooking.html - Mobile-first cooking interface
+- ✅ Large text (18-28px) readable from 2 feet away while cooking
+- ✅ Big step numbers in colored circles (40px)
+- ✅ Ingredient checkboxes to mark off as you use them
+- ✅ Wake Lock API - screen stays on automatically!
+- ✅ Shareable URLs: cooking.html?recipe_id=X
+- ✅ "Cooking Mode" button added to recipe detail modal
+- ✅ NEW: send-verification-code.js - Email 6-digit codes
+- ✅ NEW: verify-code.js - Validate codes, create sessions
+- ✅ Passwordless authentication backend (UI pending - Phase 2)
+- ✅ 19 Netlify Functions deployed (was 17)
+- ✅ 3 new contributors: Nancy, Lauren, The Cooks
+- ✅ Complete Phase 2 & 3 design specification (DESIGN_SPEC_V3.1)
+- ✅ Solves Janet's mobile cooking pain point!
+
+**v3.0.0 - MAJOR: Recipe Import System with Contributor Management (Nov 3):**
 - ✅ Complete recipe import wizard with 4-step process
 - ✅ File upload support: PDF, Word (DOCX), Images (OCR), Plain Text
 - ✅ AI-powered recipe formatting using Claude API
@@ -66,27 +83,37 @@ This file provides guidance to Claude Code (claude.ai/code) when working with th
 Cooking/
 ├── CLAUDE.md                           # This file - Project documentation
 ├── DEPLOYMENT.md                       # ⭐ Netlify deployment guide
-├── SESSION_SUMMARY_2025-11-03_*.md    # Session summaries
+├── DESIGN_SPEC_V3.1_USER_EVENTS_MOBILE.md  # ⭐ NEW v3.1 - Complete 3-phase spec
+├── SESSION_SUMMARY_2025-11-03_V3.1_COOKING_MODE.md  # ⭐ NEW v3.1 session
+├── cooking.html                        # ⭐ NEW v3.1 - Mobile cooking mode!
 ├── index.html                          # Recipe browsing interface (deployed)
 ├── events.html                         # Event management interface (deployed)
 ├── event-detail.html                   # Event dashboard (deployed)
 ├── respond.html                        # Guest response page (deployed)
+├── add-recipe.html                     # Recipe import wizard (deployed)
 ├── recipes.json                        # Recipe data (122 recipes, deployed)
 ├── recipes.db                          # SQLite database (local only)
 ├── netlify.toml                        # Netlify configuration
-├── netlify/functions/                  # Serverless functions
+├── netlify/functions/                  # Serverless functions (19 total)
 │   ├── lib/
 │   │   └── dropbox-auth.js            # ⭐ OAuth helper (auto-refresh tokens)
 │   ├── get-recipe.js                  # Get/Update single recipe (GET + PUT)
 │   ├── get-recipes.js                 # Get all/search recipes
 │   ├── save-recipes.js                # Bulk save recipes
 │   ├── load-recipes.js                # Load from Dropbox
+│   ├── add-recipe.js                  # Add new recipe
+│   ├── update-recipe.js               # Update recipe
+│   ├── extract-file.js                # Extract text from uploads
+│   ├── format-recipe.js               # AI recipe formatting
+│   ├── manage-contributors.js         # Contributor CRUD
 │   ├── create-event.js                # Create/update events
 │   ├── get-events.js                  # Get events
 │   ├── save-events.js                 # Save events to Dropbox
 │   ├── event-recipes.js               # Add/remove recipes from events
 │   ├── record-selection.js            # Record guest responses
 │   ├── generate-email.js              # Generate event emails
+│   ├── send-verification-code.js      # ⭐ NEW v3.1 - Email codes
+│   ├── verify-code.js                 # ⭐ NEW v3.1 - Validate codes
 │   └── statistics.js                  # Recipe statistics
 ├── *.pdf                               # Original recipe PDFs (50+ files)
 ├── *.pages                             # Original recipe documents

@@ -2,7 +2,7 @@
 
 **Quick Reference:** This project is deployed to Netlify at https://fergi-cooking.netlify.app
 
-**⭐ NEW:** As of November 2, 2025, recipes are stored in Dropbox (not deployed to Netlify)
+**⭐ NEW v3.1:** Mobile cooking mode (cooking.html) + authentication backend deployed (November 4, 2025)
 
 ---
 
@@ -11,9 +11,12 @@
 **Platform:** Netlify
 **Site Name:** fergi-cooking
 **Production URL:** https://fergi-cooking.netlify.app
+**Cooking Mode:** https://fergi-cooking.netlify.app/cooking.html?recipe_id=5
 **Admin Dashboard:** https://app.netlify.com/projects/fergi-cooking
 **Account:** fergidotcom@gmail.com
-**Data Storage:** Dropbox (`/recipes.json`)
+**Data Storage:** Dropbox (`/Apps/Reference Refinement/`)
+**Version:** v3.1.0 (November 4, 2025)
+**Functions:** 19 serverless functions
 
 ---
 

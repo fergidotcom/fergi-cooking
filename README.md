@@ -1,13 +1,23 @@
 # Fergi's Recipe Collection
 
-A comprehensive recipe management system with AI-powered import, event planning, and real-time Dropbox sync.
+A comprehensive recipe management system with mobile cooking mode, AI-powered import, event planning, and real-time Dropbox sync.
 
 **Live at:** https://fergi-cooking.netlify.app
-**Version:** 3.0.0 (November 2025)
-**Database:** 122 recipes
+**Version:** 3.1.0 (November 2025)
+**Database:** 122 recipes | 5 contributors
 **Platform:** Netlify (serverless) + Dropbox (data storage)
 
-## ✨ What's New in v3.0 (November 2025)
+## ✨ What's New in v3.1 (November 2025)
+
+👨‍🍳 **Mobile Cooking Mode** - Dedicated interface with LARGE text (readable from 2 feet away!), ingredient checkboxes, big step numbers, and screen stays on while cooking. Perfect for Janet's kitchen! Try it: [cooking.html?recipe_id=5](https://fergi-cooking.netlify.app/cooking.html?recipe_id=5)
+
+🔐 **Authentication Backend** - Optional passwordless email login for contributors (backend deployed, UI coming in Phase 2). Enables separate event management per contributor.
+
+👥 **More Contributors** - Added Nancy, Lauren, and The Cooks. Now 5 contributors ready to create their own events.
+
+See [CHANGELOG.md](CHANGELOG.md) for complete version history.
+
+## ✨ What's in v3.0 (Previous Release)
 
 🤖 **AI-Powered Recipe Import** - Upload PDFs, Word docs, or images, and let Claude AI format them into perfect recipes
 
@@ -17,13 +27,9 @@ A comprehensive recipe management system with AI-powered import, event planning,
 
 💾 **Dropbox Migration** - All data in Dropbox for instant updates without redeployment
 
-🎨 **Enhanced UI** - Two-column print layout, better navigation, statistics dashboard
-
-See [CHANGELOG.md](CHANGELOG.md) for complete version history.
-
 ---
 
-## 🎯 Features (v3.0.0)
+## 🎯 Features (v3.1.0)
 
 ### 🤖 AI-Powered Recipe Import
 - **4-step wizard** for guided recipe entry
@@ -53,8 +59,21 @@ See [CHANGELOG.md](CHANGELOG.md) for complete version history.
 - **Filter by contributor, source, cuisine, meal type**
 - **Beautiful card-based grid** display
 - **Responsive design** for mobile
+- **👨‍🍳 Cooking Mode (NEW v3.1)** - Mobile-first cooking interface with:
+  - LARGE text (18-28px) readable from 2 feet away
+  - Big step numbers in colored circles
+  - Ingredient checkboxes to mark off as you use them
+  - Wake Lock API - screen stays on while cooking!
+  - Perfect for glancing at while stirring pots
 - **Two-column print layout** (ingredients left, instructions right)
 - **Statistics dashboard** with counts and breakdowns
+
+### 🔐 Optional Authentication (Backend Ready - v3.1)
+- **Passwordless email verification** - 6-digit codes (no passwords!)
+- **Optional login** for contributors to establish identity
+- **Separate event management** per contributor (Phase 2)
+- **Backend deployed** - UI coming in next release
+- **Philosophy:** "These are recipes, not state secrets!" - Zero friction
 
 ### 💾 Real-Time Dropbox Sync
 - **Single source of truth:** All data in Dropbox
@@ -63,13 +82,14 @@ See [CHANGELOG.md](CHANGELOG.md) for complete version history.
 - **Shared data folder** with Reference Refinement app
 - **Instant updates** across all devices
 
-## 🏗️ System Architecture (v3.0)
+## 🏗️ System Architecture (v3.1)
 
 ### Serverless + Dropbox Architecture
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │        Web Interface (fergi-cooking.netlify.app)             │
 │  - Static HTML/CSS/JS hosted on Netlify CDN                  │
+│  - Mobile cooking mode (cooking.html) ⭐ NEW v3.1            │
 │  - Recipe import wizard (add-recipe.html)                    │
 │  - Event management (events.html, event-detail.html)         │
 │  - Guest responses (respond.html - public, no auth)          │
@@ -77,7 +97,8 @@ See [CHANGELOG.md](CHANGELOG.md) for complete version history.
 └──────────────────────────────────────────────────────────────┘
                               ↕ API Calls
 ┌──────────────────────────────────────────────────────────────┐
-│           Netlify Functions (17 serverless APIs)             │
+│           Netlify Functions (19 serverless APIs)             │
+│  + send-verification-code.js, verify-code.js ⭐ NEW v3.1    │
 │  Recipe: get-recipes, get-recipe, add-recipe, update-recipe  │
 │  Contributors: manage-contributors (CRUD)                    │
 │  Events: create-event, get-events, save-events               │
