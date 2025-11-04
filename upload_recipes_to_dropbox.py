@@ -1,58 +1,40 @@
 #!/usr/bin/env python3
 """
-Upload recipes.json to Dropbox root directory
-This is a one-time setup script to initialize the Dropbox storage
+Upload recipes.json to Dropbox via Netlify Function
 """
 
-import dropbox
-import sys
-
-# You'll need to get an access token from:
-# https://www.dropbox.com/developers/apps
-# Create an app, generate an access token with files.content.write permission
+import json
+import requests
 
 def upload_recipes():
-    # Get access token from command line or environment
-    if len(sys.argv) < 2:
-        print("Usage: python3 upload_recipes_to_dropbox.py <DROPBOX_ACCESS_TOKEN>")
-        print("\nTo get a token:")
-        print("1. Go to https://www.dropbox.com/developers/apps")
-        print("2. Create/select 'Fergi Cooking' app")
-        print("3. Go to 'Permissions' tab")
-        print("4. Enable 'files.content.write' and 'files.content.read'")
-        print("5. Go to 'Settings' tab")
-        print("6. Generate access token")
-        print("7. Run: python3 upload_recipes_to_dropbox.py <TOKEN>")
-        sys.exit(1)
+    print("📤 Uploading recipes to Dropbox...")
 
-    access_token = sys.argv[1]
+    # Load recipes
+    print("📖 Loading recipes.json...")
+    with open('recipes.json', 'r', encoding='utf-8') as f:
+        recipes = json.load(f)
 
-    # Initialize Dropbox client
-    dbx = dropbox.Dropbox(access_token)
+    print(f"✅ Loaded {len(recipes)} recipes")
 
-    # Read recipes.json
-    print("Reading recipes.json...")
-    with open('recipes.json', 'rb') as f:
-        file_data = f.read()
+    # Upload via Netlify function
+    url = "https://fergi-cooking.netlify.app/.netlify/functions/save-recipes"
 
-    print(f"File size: {len(file_data) / 1024:.1f} KB")
+    print(f"🚀 Uploading to Dropbox via {url}...")
+    response = requests.post(url, json={"recipes": recipes})
 
-    # Upload to Dropbox root
-    print("Uploading to Dropbox:/recipes.json...")
-    try:
-        dbx.files_upload(
-            file_data,
-            '/recipes.json',
-            mode=dropbox.files.WriteMode.overwrite,
-            autorename=False
-        )
-        print("✓ Upload successful!")
-        print("\nThe file is now available at Dropbox:/recipes.json")
-        print("Your Fergi Cooking website can now load recipes from Dropbox!")
+    if response.status_code == 200:
+        result = response.json()
+        print(f"✅ Upload successful!")
+        print(f"   - Recipes saved: {result.get('count', 'unknown')}")
+        print(f"   - Message: {result.get('message', '')}")
+    else:
+        print(f"❌ Upload failed!")
+        print(f"   - Status code: {response.status_code}")
+        print(f"   - Response: {response.text}")
+        return False
 
-    except Exception as e:
-        print(f"✗ Upload failed: {e}")
-        sys.exit(1)
+    return True
 
 if __name__ == '__main__':
-    upload_recipes()
+    success = upload_recipes()
+    exit(0 if success else 1)

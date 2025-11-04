@@ -716,33 +716,26 @@
             }
         }
     </style>
-    <!-- Dropbox SDK -->
-    <script src="https://unpkg.com/dropbox/dist/Dropbox-sdk.min.js"></script>
 </head>
 <body>
     <header>
-        <h1>Fergi's Recipe Collection <span style="font-size: 0.6em; opacity: 0.8;">v3.0</span></h1>
+        <h1>Fergi's Recipe Collection <span style="font-size: 0.6em; opacity: 0.8;">v3.1.6</span></h1>
         <p>Your personal recipe database and cooking companion • Recipe Import & Contributor Management</p>
-        <div id="dropboxStatus" style="margin-top: 1rem; font-size: 0.9rem;">
-            <span id="authStatus">Not connected to Dropbox</span>
-            <button id="authButton" onclick="app.initiateDropboxAuth()" style="margin-left: 1rem; padding: 0.5rem 1rem; background: #0061ff; color: white; border: none; border-radius: 4px; cursor: pointer;">Connect Dropbox</button>
-        </div>
     </header>
 
     <nav>
         <button onclick="app.showAll()">All Recipes</button>
-        <button onclick="app.showMainRecipes()">Main Collection</button>
-        <button onclick="app.showJanetRecipes()" style="background: #9b59b6; border: 2px solid #8e44ad;">📖 Janet Mason's Cookbook</button>
+        <select id="contributorFilter" onchange="app.filterByContributor()" style="padding: 0.7rem 1.5rem; border: none; background: #9b59b6; color: white; border-radius: 5px; cursor: pointer; font-size: 1rem; transition: all 0.3s; font-weight: 500;">
+            <option value="" style="background: white; color: #2c3e50;">📖 All Contributors</option>
+        </select>
         <button onclick="app.showFavorites()" style="background: var(--success-color);">★ Favorites</button>
+        <button onclick="app.showNeedsReview()" style="background: #e74c3c; color: white;">⚠️ Needs Review</button>
         <button onclick="window.location.href='events.html'" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none;">🎉 Events</button>
         <button onclick="app.showContributorsModal()" style="background: #1abc9c; color: white;">👥 Contributors</button>
         <button onclick="window.location.href='add-recipe.html'" style="background: #e67e22; color: white; font-weight: bold;">+ Add Recipe</button>
         <button class="secondary" onclick="app.showStatistics()">Statistics</button>
         <div class="search-container">
             <input type="text" id="searchInput" placeholder="Search recipes..." onkeyup="app.handleSearch(event)">
-            <select id="contributorFilter" onchange="app.filterByContributor()">
-                <option value="">All Contributors</option>
-            </select>
             <button onclick="app.performSearch()">Search</button>
         </div>
     </nav>
@@ -826,202 +819,36 @@
             apiUrl: '/api',
             recipes: [],
             currentRecipe: null,
-            dropboxClient: null,
-            dropboxAccessToken: null,
-            dropboxRefreshToken: null,
-            DROPBOX_APP_KEY: 'q4ldgkwjmhxv6w2',
-            RECIPES_PATH: '/recipes.json',  // Same app folder as Reference Refinement
 
             async init() {
-                // Check for OAuth callback first
-                const urlParams = new URLSearchParams(window.location.search);
-                const code = urlParams.get('code');
-
-                if (code) {
-                    await this.handleOAuthCallback(code);
-                    // Clean URL
-                    window.history.replaceState({}, document.title, window.location.pathname);
-                    return;
-                }
-
-                // Check for stored tokens
-                this.dropboxAccessToken = localStorage.getItem('dropbox_access_token');
-                this.dropboxRefreshToken = localStorage.getItem('dropbox_refresh_token');
-
-                if (this.dropboxAccessToken) {
-                    this.initDropboxClient(this.dropboxAccessToken);
-                    this.updateAuthStatus(true);
-                    await this.loadRecipes();
-                } else {
-                    this.updateAuthStatus(false);
-                    // Load from local JSON as fallback
-                    await this.loadRecipes();
-                }
-            },
-
-            initDropboxClient(accessToken) {
-                this.dropboxClient = new Dropbox.Dropbox({ accessToken });
-            },
-
-            async refreshAccessToken() {
-                try {
-                    if (!this.dropboxRefreshToken) {
-                        throw new Error('No refresh token available');
-                    }
-
-                    const response = await fetch('/.netlify/functions/dropbox-oauth', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            grant_type: 'refresh_token',
-                            refresh_token: this.dropboxRefreshToken
-                        })
-                    });
-
-                    if (!response.ok) {
-                        throw new Error('Token refresh failed');
-                    }
-
-                    const data = await response.json();
-
-                    // Update tokens
-                    this.dropboxAccessToken = data.access_token;
-                    if (data.refresh_token) {
-                        this.dropboxRefreshToken = data.refresh_token;
-                    }
-
-                    // Save to localStorage
-                    localStorage.setItem('dropbox_access_token', this.dropboxAccessToken);
-                    if (data.refresh_token) {
-                        localStorage.setItem('dropbox_refresh_token', data.refresh_token);
-                    }
-
-                    // Reinitialize client
-                    this.initDropboxClient(this.dropboxAccessToken);
-
-                    console.log('Access token refreshed successfully');
-                    return true;
-                } catch (error) {
-                    console.error('Token refresh failed:', error);
-                    // Clear tokens and require re-auth
-                    localStorage.removeItem('dropbox_access_token');
-                    localStorage.removeItem('dropbox_refresh_token');
-                    this.dropboxAccessToken = null;
-                    this.dropboxRefreshToken = null;
-                    this.updateAuthStatus(false);
-                    return false;
-                }
-            },
-
-            updateAuthStatus(connected) {
-                const statusEl = document.getElementById('authStatus');
-                const buttonEl = document.getElementById('authButton');
-
-                if (connected) {
-                    statusEl.textContent = '✓ Connected to Dropbox';
-                    statusEl.style.color = '#27ae60';
-                    buttonEl.textContent = 'Disconnect';
-                    buttonEl.onclick = () => this.disconnectDropbox();
-                } else {
-                    statusEl.textContent = 'Not connected to Dropbox';
-                    statusEl.style.color = '#e74c3c';
-                    buttonEl.textContent = 'Connect Dropbox';
-                    buttonEl.onclick = () => this.initiateDropboxAuth();
-                }
-            },
-
-            initiateDropboxAuth() {
-                const authUrl = `https://www.dropbox.com/oauth2/authorize?client_id=${this.DROPBOX_APP_KEY}&response_type=code&redirect_uri=${encodeURIComponent(window.location.origin + window.location.pathname)}`;
-                window.location.href = authUrl;
-            },
-
-            async handleOAuthCallback(code) {
-                try {
-                    this.showLoading();
-                    const response = await fetch('/api/dropbox-oauth', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ code })
-                    });
-
-                    const data = await response.json();
-
-                    if (data.access_token) {
-                        this.dropboxAccessToken = data.access_token;
-                        this.dropboxRefreshToken = data.refresh_token;
-                        localStorage.setItem('dropbox_access_token', data.access_token);
-                        if (data.refresh_token) {
-                            localStorage.setItem('dropbox_refresh_token', data.refresh_token);
-                        }
-                        this.initDropboxClient(data.access_token);
-                        this.updateAuthStatus(true);
-                        await this.loadRecipes();
-                    } else {
-                        throw new Error('Failed to get access token');
-                    }
-                } catch (error) {
-                    this.showError(`OAuth failed: ${error.message}`);
-                } finally {
-                    this.hideLoading();
-                }
-            },
-
-            disconnectDropbox() {
-                localStorage.removeItem('dropbox_access_token');
-                localStorage.removeItem('dropbox_refresh_token');
-                this.dropboxClient = null;
-                this.dropboxAccessToken = null;
-                this.updateAuthStatus(false);
-                this.recipes = [];
-                this.renderRecipeGrid();
+                // Load recipes on startup - no auth needed!
+                await this.loadRecipes();
             },
 
             async loadRecipes() {
                 try {
                     this.showLoading();
 
-                    // Try to load from Dropbox first (writable storage)
-                    if (this.dropboxAccessToken) {
-                        try {
-                            let response = await fetch('/.netlify/functions/load-recipes', {
-                                method: 'GET',
-                                headers: {
-                                    'Authorization': `Bearer ${this.dropboxAccessToken}`
-                                }
-                            });
+                    // Load from Dropbox via server-side function (auto-authenticates)
+                    const response = await fetch('/.netlify/functions/load-recipes', {
+                        method: 'GET'
+                    });
 
-                            // If token expired, refresh and retry
-                            if (response.status === 401) {
-                                console.log('Token expired during load, refreshing...');
-                                const refreshed = await this.refreshAccessToken();
-
-                                if (refreshed) {
-                                    response = await fetch('/.netlify/functions/load-recipes', {
-                                        method: 'GET',
-                                        headers: {
-                                            'Authorization': `Bearer ${this.dropboxAccessToken}`
-                                        }
-                                    });
-                                }
-                            }
-
-                            if (response.ok) {
-                                const data = await response.json();
-                                this.recipes = data.recipes;
-                                this.renderRecipeGrid();
-                                return;
-                            }
-                        } catch (dropboxError) {
-                            console.log('Dropbox load failed, falling back to local JSON:', dropboxError);
-                        }
+                    if (response.ok) {
+                        const data = await response.json();
+                        this.recipes = data.recipes;
+                        this.renderRecipeGrid();
+                        console.log(`✅ Loaded ${this.recipes.length} recipes from Dropbox`);
+                        return;
                     }
 
-                    // Fallback to local recipes.json (read-only)
-                    const response = await fetch('/recipes.json');
-                    if (!response.ok) {
-                        throw new Error(`Failed to load recipes: ${response.status} ${response.statusText}`);
+                    // Fallback to local recipes.json (read-only, for development)
+                    console.log('⚠️ Dropbox load failed, falling back to local JSON');
+                    const fallbackResponse = await fetch('/recipes.json');
+                    if (!fallbackResponse.ok) {
+                        throw new Error(`Failed to load recipes: ${fallbackResponse.status} ${fallbackResponse.statusText}`);
                     }
-                    this.recipes = await response.json();
+                    this.recipes = await fallbackResponse.json();
                     this.renderRecipeGrid();
                 } catch (error) {
                     this.showError(`Failed to load recipes: ${error.message}`);
@@ -1032,50 +859,18 @@
 
             async saveRecipes() {
                 try {
-                    if (!this.dropboxAccessToken) {
-                        throw new Error('Not connected to Dropbox. Please connect to save changes.');
-                    }
-
                     this.showLoading();
 
-                    let response = await fetch('/.netlify/functions/save-recipes', {
+                    // Save to Dropbox via server-side function (auto-authenticates)
+                    const response = await fetch('/.netlify/functions/save-recipes', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({
-                            recipes: this.recipes,
-                            accessToken: this.dropboxAccessToken
+                            recipes: this.recipes
                         })
                     });
-
-                    // If token expired, refresh and retry
-                    if (response.status === 401) {
-                        const errorData = await response.json();
-                        if (errorData.expired || (errorData.error && errorData.error.toLowerCase().includes('expired'))) {
-                            console.log('Token expired, refreshing...');
-                            const refreshed = await this.refreshAccessToken();
-
-                            if (refreshed) {
-                                console.log('Token refreshed, retrying save...');
-                                // Retry with new token
-                                response = await fetch('/.netlify/functions/save-recipes', {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json'
-                                    },
-                                    body: JSON.stringify({
-                                        recipes: this.recipes,
-                                        accessToken: this.dropboxAccessToken
-                                    })
-                                });
-                            } else {
-                                throw new Error('Token expired. Please reconnect to Dropbox.');
-                            }
-                        } else {
-                            throw new Error(errorData.error || 'Unauthorized');
-                        }
-                    }
 
                     if (!response.ok) {
                         const error = await response.json();
@@ -1083,10 +878,9 @@
                     }
 
                     const result = await response.json();
-                    console.log('Recipes saved successfully:', result);
-                    // Success - no need to show alert
+                    console.log('✅ Recipes saved successfully:', result);
                 } catch (error) {
-                    console.error('Save error:', error);
+                    console.error('❌ Save error:', error);
                     this.showError(`Failed to save recipes: ${error.message}`);
                 } finally {
                     this.hideLoading();
@@ -1106,14 +900,15 @@
                     const card = document.createElement('div');
                     card.className = 'recipe-card';
 
-                    // Add needs-review class if title contains "NEEDS TITLE"
-                    if (recipe.title && recipe.title.includes('NEEDS TITLE')) {
+                    // Add needs-review class if flagged for review
+                    if (recipe.needs_review === 1 || recipe.needs_review === true) {
                         card.classList.add('needs-review');
                     }
 
                     card.onclick = () => this.showRecipeDetail(recipe.id);
 
                     const favoriteIcon = recipe.favorite ? '<span class="favorite-star">★</span>' : '';
+                    const reviewBadge = (recipe.needs_review === 1 || recipe.needs_review === true) ? '<span style="background: #e74c3c; color: white; padding: 0.2rem 0.5rem; border-radius: 3px; font-size: 0.8rem; font-weight: bold; margin-left: 0.5rem;">⚠️ Review</span>' : '';
                     const rating = recipe.rating ? '★'.repeat(recipe.rating) + '☆'.repeat(5 - recipe.rating) : '';
 
                     const totalTime = (recipe.prep_time_minutes || 0) + (recipe.cook_time_minutes || 0);
@@ -1123,7 +918,7 @@
 
                     card.innerHTML = `
                         <div class="recipe-card-header">
-                            <h3>${favoriteIcon} ${recipe.title}</h3>
+                            <h3>${favoriteIcon} ${recipe.title}${reviewBadge}</h3>
                             <div class="recipe-card-meta">
                                 ${timeInfo} ${timeInfo && (calorieInfo || servingInfo) ? '•' : ''} ${servingInfo} ${servingInfo && calorieInfo ? '•' : ''} ${calorieInfo}
                             </div>
@@ -1131,7 +926,7 @@
                         <div class="recipe-card-body">
                             <p class="text-muted">${recipe.description || 'No description available'}</p>
                             <div class="recipe-tags">
-                                ${recipe.source_attribution ? `<span class="tag source">${recipe.source_attribution}</span>` : ''}
+                                ${recipe.contributor ? `<span class="tag source">👤 ${recipe.contributor}</span>` : ''}
                                 ${recipe.cuisine_type ? `<span class="tag cuisine">${recipe.cuisine_type}</span>` : ''}
                                 ${recipe.meal_type ? `<span class="tag">${recipe.meal_type}</span>` : ''}
                             </div>
@@ -1664,16 +1459,6 @@
                 this.showAll();
             },
 
-            showMainRecipes() {
-                document.getElementById('statsSection').classList.add('hidden');
-                this.filterBySource('main');
-            },
-
-            showJanetRecipes() {
-                document.getElementById('statsSection').classList.add('hidden');
-                this.filterBySource('Janet');
-            },
-
             showFavorites() {
                 document.getElementById('statsSection').classList.add('hidden');
                 this.filterByFavorite();
@@ -1719,8 +1504,10 @@
             },
 
             filterByNeedsReview() {
+                console.log('🔍 Filtering recipes that need review...');
                 const allRecipes = [...this.recipes];
-                const filtered = allRecipes.filter(r => r.title && r.title.includes('NEEDS TITLE'));
+                const filtered = allRecipes.filter(r => r.needs_review === 1 || r.needs_review === true);
+                console.log(`✅ Found ${filtered.length} recipes needing review`);
                 const tempRecipes = this.recipes;
                 this.recipes = filtered;
                 this.renderRecipeGrid();
@@ -1823,13 +1610,15 @@
                 if (!filterSelect) return;
 
                 // Clear existing options except "All Contributors"
-                filterSelect.innerHTML = '<option value="">All Contributors</option>';
+                filterSelect.innerHTML = '<option value="" style="background: white; color: #2c3e50;">📖 All Contributors</option>';
 
                 // Add each contributor as an option
                 this.contributors.forEach(contributor => {
                     const option = document.createElement('option');
                     option.value = contributor;
                     option.textContent = contributor;
+                    option.style.background = 'white';
+                    option.style.color = '#2c3e50';
                     filterSelect.appendChild(option);
                 });
             },
@@ -1930,25 +1719,37 @@
                 const filterSelect = document.getElementById('contributorFilter');
                 const contributor = filterSelect.value;
 
+                console.log(`🔍 Filtering by contributor: "${contributor || 'All'}"`);
+
+                // Hide stats section when filtering
+                document.getElementById('statsSection').classList.add('hidden');
+
+                // Clear current recipes to force refresh
+                const grid = document.getElementById('recipeGrid');
+                grid.innerHTML = '';
+
                 this.showLoading();
 
                 try {
-                    let url = `${this.apiUrl}/get-recipes`;
+                    let url = `${this.apiUrl}/recipes`;  // Use /api/recipes (has redirect rule)
                     if (contributor) {
                         url += `?contributor=${encodeURIComponent(contributor)}`;
                     }
 
+                    console.log(`📡 Fetching: ${url}`);
                     const response = await fetch(url);
                     const data = await response.json();
 
                     if (data.success) {
+                        console.log(`✅ Received ${data.recipes.length} recipes from API`);
                         this.recipes = data.recipes;
                         this.renderRecipeGrid();
+                        console.log(`✅ Rendered ${this.recipes.length} recipes for ${contributor || 'All Contributors'}`);
                     } else {
                         this.showError('Failed to filter recipes');
                     }
                 } catch (error) {
-                    console.error('Error filtering by contributor:', error);
+                    console.error('❌ Error filtering by contributor:', error);
                     this.showError('Error filtering recipes: ' + error.message);
                 } finally {
                     this.hideLoading();

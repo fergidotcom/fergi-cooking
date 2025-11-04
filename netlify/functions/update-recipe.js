@@ -4,6 +4,7 @@
  */
 
 const fetch = require('node-fetch');
+const { getValidAccessToken } = require('./lib/dropbox-auth');
 
 exports.handler = async (event, context) => {
   const headers = {
@@ -46,19 +47,9 @@ exports.handler = async (event, context) => {
     const updatedRecipe = JSON.parse(event.body);
     console.log('Update recipe - Data received:', JSON.stringify(updatedRecipe, null, 2));
 
-    // Get access token from user or use app token
-    let accessToken = updatedRecipe.accessToken;
-    if (!accessToken) {
-      accessToken = process.env.DROPBOX_ACCESS_TOKEN;
-    }
-
-    if (!accessToken) {
-      return {
-        statusCode: 401,
-        headers,
-        body: JSON.stringify({ error: 'Access token required' })
-      };
-    }
+    // Get valid access token from server (auto-refreshes if needed)
+    const accessToken = await getValidAccessToken();
+    console.log('✅ Got valid server-side access token for recipe update');
 
     // First, load the current recipes.json from Dropbox
     console.log('Loading recipes from Dropbox...');

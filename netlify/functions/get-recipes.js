@@ -60,20 +60,8 @@ exports.handler = async (event, context) => {
     // Load recipes data from Dropbox
     let recipesData = await loadRecipesFromDropbox(accessToken);
 
-    // Apply bulk contributor assignment for recipes without contributor
-    recipesData = recipesData.map(recipe => {
-      if (!recipe.contributor) {
-        // Check if it's from Janet Mason's cookbook
-        if (recipe.source_attribution === "Janet Mason's Cookbook" ||
-            recipe.tags?.includes("Janet Mason") ||
-            recipe.tags?.includes("Janet Mason's Cookbook")) {
-          recipe.contributor = "Janet Mason";
-        } else {
-          recipe.contributor = "Fergi";
-        }
-      }
-      return recipe;
-    });
+    // Note: Contributors are now permanently assigned in recipes.json
+    // No need for dynamic assignment
 
     // Parse query parameters
     const params = event.queryStringParameters || {};

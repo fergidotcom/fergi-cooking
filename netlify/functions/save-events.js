@@ -1,5 +1,6 @@
 // Save events.json to Dropbox (writable storage)
 const fetch = require('node-fetch');
+const { getValidAccessToken } = require('./lib/dropbox-auth');
 
 exports.handler = async (event, context) => {
   const headers = {
@@ -25,21 +26,6 @@ exports.handler = async (event, context) => {
     const body = JSON.parse(event.body);
     const { events } = body;
 
-    // Use token from body if provided, otherwise use app token
-    let accessToken = body.accessToken;
-
-    if (!accessToken) {
-      accessToken = process.env.DROPBOX_ACCESS_TOKEN;
-    }
-
-    if (!accessToken) {
-      return {
-        statusCode: 401,
-        headers,
-        body: JSON.stringify({ error: 'Access token required' })
-      };
-    }
-
     if (!events) {
       return {
         statusCode: 400,
@@ -47,6 +33,10 @@ exports.handler = async (event, context) => {
         body: JSON.stringify({ error: 'Events data required' })
       };
     }
+
+    // Get valid access token from server (auto-refreshes if needed)
+    const accessToken = await getValidAccessToken();
+    console.log('✅ Got valid server-side access token for saving events');
 
     // Upload to Dropbox
     const response = await fetch('https://content.dropboxapi.com/2/files/upload', {

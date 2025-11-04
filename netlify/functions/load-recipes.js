@@ -1,5 +1,6 @@
 // Load recipes.json from Dropbox (writable storage)
 const fetch = require('node-fetch');
+const { getValidAccessToken, handleDropboxResponse } = require('./lib/dropbox-auth');
 
 exports.handler = async (event, context) => {
   const headers = {
@@ -22,15 +23,9 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    const accessToken = event.headers.authorization?.replace('Bearer ', '');
-
-    if (!accessToken) {
-      return {
-        statusCode: 401,
-        headers,
-        body: JSON.stringify({ error: 'Access token required' })
-      };
-    }
+    // Get valid access token from server (auto-refreshes if needed)
+    const accessToken = await getValidAccessToken();
+    console.log('✅ Got valid server-side access token for recipe loading');
 
     // Download from Dropbox
     const response = await fetch('https://content.dropboxapi.com/2/files/download', {
@@ -45,33 +40,13 @@ exports.handler = async (event, context) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      let errorData;
-      try {
-        errorData = JSON.parse(errorText);
-      } catch (e) {
-        errorData = { error: errorText };
-      }
-
-      // Check if token is expired
-      if (errorData.error &&
-          (errorData.error['.tag'] === 'expired_access_token' ||
-           errorData.error_summary?.includes('expired_access_token'))) {
-        return {
-          statusCode: 401,
-          headers,
-          body: JSON.stringify({
-            success: false,
-            error: 'Token expired',
-            expired: true
-          })
-        };
-      }
-
+      console.error('Dropbox API error:', errorText);
       throw new Error(`Dropbox API error: ${errorText}`);
     }
 
     const recipesJson = await response.text();
     const recipes = JSON.parse(recipesJson);
+    console.log(`✅ Loaded ${recipes.length} recipes from Dropbox`);
 
     return {
       statusCode: 200,

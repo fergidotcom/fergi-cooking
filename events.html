@@ -313,31 +313,22 @@
         const app = {
             events: [],
             currentEvent: null,
-            dropboxAccessToken: null,
 
             async init() {
-                // Load Dropbox access token
-                this.dropboxAccessToken = localStorage.getItem('dropbox_access_token');
-                if (!this.dropboxAccessToken) {
-                    alert('Please connect to Dropbox first. Redirecting to main page...');
-                    window.location.href = 'index.html';
-                    return;
-                }
-
+                // No auth needed - server handles it!
                 await this.loadEvents();
                 this.checkPendingRecipe();
             },
 
             async loadEvents() {
                 try {
-                    const response = await fetch('/.netlify/functions/get-events', {
-                        headers: {
-                            'Authorization': `Bearer ${this.dropboxAccessToken}`
-                        }
-                    });
+                    // Load from Dropbox via server-side function (auto-authenticates)
+                    const response = await fetch('/.netlify/functions/get-events');
+
                     if (response.ok) {
                         this.events = await response.json();
                         this.renderEvents(this.events);
+                        console.log(`✅ Loaded ${this.events.length} events from Dropbox`);
                     } else {
                         console.error('Failed to load events');
                         this.showEmptyState();
@@ -461,8 +452,7 @@
                         response = await fetch('/.netlify/functions/create-event', {
                             method: 'PUT',
                             headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${this.dropboxAccessToken}`
+                                'Content-Type': 'application/json'
                             },
                             body: JSON.stringify(eventData)
                         });
@@ -470,8 +460,7 @@
                         response = await fetch('/.netlify/functions/create-event', {
                             method: 'POST',
                             headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${this.dropboxAccessToken}`
+                                'Content-Type': 'application/json'
                             },
                             body: JSON.stringify(eventData)
                         });

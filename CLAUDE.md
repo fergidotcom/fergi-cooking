@@ -12,12 +12,37 @@ This file provides guidance to Claude Code (claude.ai/code) when working with th
 
 **Project Location:** `/Users/joeferguson/Library/CloudStorage/Dropbox/Fergi/Cooking`
 **Created:** October 30, 2025
-**Status:** ✓ Production - Deployed to Netlify (v3.1.0)
+**Status:** ✓ Production - Deployed to Netlify (v3.1.6)
 **Live URL:** https://fergi-cooking.netlify.app
 **Cooking Mode:** https://fergi-cooking.netlify.app/cooking.html?recipe_id=5
 **Purpose:** Organize and manage recipe collection, create searchable recipe database, document family recipes, manage cooking events with guest preferences, import recipes with AI formatting, manage contributors, mobile cooking mode for Janet
 
 ## 🆕 Recent Updates - November 4, 2025
+
+**v3.1.6 - FEATURE: Needs Review Filter (Nov 4):**
+- ✅ Scanned database and flagged 23 incomplete recipes
+- ✅ Added "⚠️ Needs Review" button to navigation bar
+- ✅ Red warning badge on recipe cards needing review
+- ✅ Filter shows recipes missing ingredients (4) or instructions (19)
+- ✅ Added needs_review field to recipe schema
+- ✅ Console logging for debugging review filter
+- ✅ All flagged recipes uploaded to Dropbox
+
+**v3.1.5 - BUGFIX: Contributor Display (Nov 4):**
+- ✅ Recipe cards now show contributor name (👤 Janet / 👤 Fergi)
+- ✅ Fixed: cards were showing source_attribution instead of contributor
+- ✅ Improved contributor filter with better refresh behavior
+- ✅ Added debug logging to contributor filter
+- ✅ Filter now clears grid before rendering new results
+
+**v3.1.4 - BUGFIX: Contributor Assignments (Nov 4):**
+- ✅ Fixed contributor filter returning no results for "Fergi"
+- ✅ Assigned contributors to all 122 recipes (89 Janet, 33 Fergi)
+- ✅ Renamed "Janet Mason" to "Janet" throughout system
+- ✅ Created fix_contributors.py script for bulk assignment
+- ✅ Updated contributors.json with new name
+- ✅ Uploaded all data to Dropbox (production database)
+- ✅ Contributor filter now fully functional
 
 **v3.1.0 - MOBILE COOKING MODE + Auth Backend:**
 - ✅ NEW: cooking.html - Mobile-first cooking interface
@@ -303,17 +328,21 @@ See database schema: `sqlite3 recipes.db ".schema"`
 ## Important Files
 
 - **DEPLOYMENT.md** - Complete Netlify deployment guide
-- **SESSION_SUMMARY_2025-11-03_RECIPE_DISPLAY_FIXES.md** - ⭐ Latest: Recipe display and API fixes
+- **SESSION_SUMMARY_2025-11-04_CONTRIBUTOR_FIX.md** - ⭐ Latest: Contributor assignment fix
+- **SESSION_SUMMARY_2025-11-03_RECIPE_DISPLAY_FIXES.md** - Recipe display and API fixes
 - **SESSION_SUMMARY_2025-11-02_DELETE_FIX.md** - Bug fix documentation
 - **RECIPE_INSTRUCTION_REFORMATTING_SUMMARY.md** - Recipe instruction updates
+- **fix_contributors.py** - Script to fix contributor assignments (NEW v3.1.4)
 - **reformat_instructions.py** - Script to reformat recipe instructions
 - **recipes.db** - SQLite database (not deployed)
 - **recipes.json** - JSON export for web interface (bundled with Netlify Functions)
 - **netlify.toml** - Netlify configuration (includes recipes.json bundling)
+- **netlify/functions/data/contributors.json** - Contributor list
 - **index.html** - Recipe browsing interface (deployed to Netlify)
 - **events.html** - Event management interface (deployed to Netlify)
 - **event-detail.html** - Event dashboard (deployed to Netlify)
 - **respond.html** - Public guest response page (deployed to Netlify)
+- **cooking.html** - Mobile cooking mode (deployed to Netlify)
 
 ## Notes
 
@@ -328,10 +357,10 @@ The recipe collection represents years of accumulated cooking knowledge and fami
 
 ---
 
-**Last Updated:** November 3, 2025
-**Version:** v3.0.0
+**Last Updated:** November 4, 2025
+**Version:** v3.1.6
 **Status:** ✓ Production - Live at https://fergi-cooking.netlify.app
-**Database:** 122 recipes (single JSON file in Dropbox) | **17 Netlify Functions** | **All APIs Working**
+**Database:** 122 recipes (89 Janet, 33 Fergi, 23 need review) | **19 Netlify Functions** | **All APIs Working**
 
 **Core Features:**
 - Recipe browsing, search, and filtering
@@ -341,7 +370,7 @@ The recipe collection represents years of accumulated cooking knowledge and fami
 - **NEW: File upload support (PDF, Word, Images with OCR, Text)**
 - **NEW: AI-powered recipe formatting (Claude API)**
 - **NEW: Beautiful two-column print layout**
-- Janet Mason's Cookbook (85 recipes, auto-assigned to Janet)
+- Janet's Cookbook (89 recipes, properly assigned to Janet contributor)
 - Event creation and management
 - Recipe-to-event assignment
 - Guest preference collection (with actual recipe names!)
