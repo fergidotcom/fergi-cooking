@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cooking Mode - Fergi Cooking</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #e74c3c;
+            --success-color: #27ae60;
+            --text-color: #2c3e50;
+            --background: #ffffff;
+            --card-background: #f8f9fa;
+            --border-color: #dee2e6;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--background);
+            color: var(--text-color);
+            line-height: 1.8;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Header - Minimal, fixed */
+        .cooking-header {
+            background: var(--primary-color);
+            color: white;
+            padding: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .cooking-header .back-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.25rem 0.5rem;
+            line-height: 1;
+        }
+
+        .cooking-header h1 {
+            font-size: 1.1rem;
+            font-weight: normal;
+            flex: 1;
+        }
+
+        /* Main Content */
+        .cooking-content {
+            padding: 1.5rem 1rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* Recipe Title */
+        .recipe-title {
+            font-size: 1.75rem;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+            line-height: 1.3;
+        }
+
+        /* Meta Info Card */
+        .recipe-meta-card {
+            background: var(--card-background);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+            border: 2px solid var(--border-color);
+        }
+
+        .meta-item {
+            font-size: 1rem;
+            color: var(--text-color);
+        }
+
+        .meta-item strong {
+            font-weight: 600;
+        }
+
+        /* Section Headers */
+        .section-header {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin: 2rem 0 1rem 0;
+            padding-bottom: 0.5rem;
+            border-bottom: 3px solid var(--accent-color);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Ingredients Section */
+        .ingredients-list {
+            background: var(--card-background);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .ingredient-item {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .ingredient-item:last-child {
+            border-bottom: none;
+        }
+
+        .ingredient-checkbox {
+            width: 24px;
+            height: 24px;
+            min-width: 24px;
+            cursor: pointer;
+            margin-top: 0.1rem;
+        }
+
+        .ingredient-text {
+            flex: 1;
+        }
+
+        .ingredient-quantity {
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: var(--accent-color);
+        }
+
+        .ingredient-item.checked {
+            opacity: 0.5;
+            text-decoration: line-through;
+        }
+
+        /* Instructions Section */
+        .instructions-list {
+            margin-bottom: 2rem;
+        }
+
+        .instruction-step {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: var(--card-background);
+            border-radius: 10px;
+            border-left: 5px solid var(--accent-color);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .step-number {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: white;
+            background: var(--accent-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            min-width: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .step-text {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            flex: 1;
+            padding-top: 0.25rem;
+        }
+
+        /* Notes Section */
+        .recipe-notes {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+
+        .recipe-notes strong {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #856404;
+        }
+
+        /* Back Button (Bottom) */
+        .back-to-recipes {
+            text-align: center;
+            padding: 2rem 0;
+            margin-top: 2rem;
+        }
+
+        .back-to-recipes button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 1rem 3rem;
+            font-size: 1.1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            font-weight: bold;
+        }
+
+        .back-to-recipes button:active {
+            transform: translateY(2px);
+        }
+
+        /* Loading State */
+        .loading {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-color);
+        }
+
+        .spinner {
+            border: 4px solid var(--border-color);
+            border-top: 4px solid var(--accent-color);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Error State */
+        .error {
+            background: #f8d7da;
+            border: 2px solid #f5c6cb;
+            border-radius: 10px;
+            padding: 2rem;
+            margin: 2rem 1rem;
+            text-align: center;
+            color: #721c24;
+        }
+
+        .error h2 {
+            margin-bottom: 1rem;
+        }
+
+        /* Responsive Adjustments */
+        @media (min-width: 768px) {
+            .cooking-content {
+                padding: 2rem;
+            }
+
+            .recipe-title {
+                font-size: 2.5rem;
+            }
+
+            .section-header {
+                font-size: 1.5rem;
+            }
+
+            .ingredient-item {
+                font-size: 1.2rem;
+            }
+
+            .step-text {
+                font-size: 1.2rem;
+            }
+
+            .step-number {
+                width: 50px;
+                height: 50px;
+                font-size: 1.6rem;
+            }
+        }
+
+        /* Print Styles */
+        @media print {
+            .cooking-header,
+            .back-to-recipes {
+                display: none;
+            }
+
+            .cooking-content {
+                padding: 0;
+            }
+
+            .instruction-step {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="cooking-header">
+        <button class="back-btn" onclick="goBack()">←</button>
+        <h1>Fergi Cooking - Cooking Mode</h1>
+    </div>
+
+    <div id="content">
+        <div class="loading">
+            <div class="spinner"></div>
+            <p>Loading recipe...</p>
+        </div>
+    </div>
+
+    <script>
+        // Get recipe ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const recipeId = urlParams.get('recipe_id') || urlParams.get('id');
+
+        if (!recipeId) {
+            showError('No recipe specified. Please select a recipe from the main page.');
+        } else {
+            loadRecipe(recipeId);
+        }
+
+        async function loadRecipe(id) {
+            try {
+                // Try multiple endpoints for flexibility
+                let recipe = null;
+
+                // First try: get-recipe endpoint
+                try {
+                    const response = await fetch(`/.netlify/functions/get-recipe?id=${id}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        recipe = data.recipe || data;
+                    }
+                } catch (e) {
+                    console.log('get-recipe failed, trying get-recipes');
+                }
+
+                // Fallback: get-recipes and filter
+                if (!recipe) {
+                    const response = await fetch('/.netlify/functions/get-recipes');
+                    if (response.ok) {
+                        const data = await response.json();
+                        const recipes = data.recipes || data;
+                        recipe = recipes.find(r => r.id == id);
+                    }
+                }
+
+                if (!recipe) {
+                    throw new Error('Recipe not found');
+                }
+
+                // Enable Wake Lock to keep screen on while cooking
+                enableWakeLock();
+
+                displayRecipe(recipe);
+            } catch (error) {
+                console.error('Error loading recipe:', error);
+                showError(`Failed to load recipe: ${error.message}`);
+            }
+        }
+
+        function displayRecipe(recipe) {
+            const content = document.getElementById('content');
+
+            // Build ingredients HTML
+            let ingredientsHtml = '';
+            if (recipe.ingredients && recipe.ingredients.length > 0) {
+                ingredientsHtml = recipe.ingredients.map((ing, idx) => {
+                    const quantity = ing.quantity ? `<span class="ingredient-quantity">${ing.quantity}${ing.unit ? ' ' + ing.unit : ''}</span> ` : '';
+                    const name = ing.ingredient_name || ing.name || '';
+                    const prep = ing.preparation ? `, ${ing.preparation}` : '';
+
+                    return `
+                        <div class="ingredient-item" id="ingredient-${idx}">
+                            <input type="checkbox" class="ingredient-checkbox" onchange="toggleIngredient(${idx})">
+                            <div class="ingredient-text">
+                                ${quantity}${name}${prep}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                ingredientsHtml = '<p style="color: #999; font-style: italic;">No ingredients listed</p>';
+            }
+
+            // Build instructions HTML
+            let instructionsHtml = '';
+            if (recipe.instructions && recipe.instructions.length > 0) {
+                instructionsHtml = recipe.instructions.map((inst, idx) => {
+                    const text = inst.instruction_text || inst.text || inst;
+                    return `
+                        <div class="instruction-step">
+                            <div class="step-number">${idx + 1}</div>
+                            <div class="step-text">${text}</div>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                instructionsHtml = '<p style="color: #999; font-style: italic;">No instructions provided</p>';
+            }
+
+            // Build meta info
+            const prepTime = recipe.prep_time_minutes ? `⏱️ Prep: ${recipe.prep_time_minutes} min` : '';
+            const cookTime = recipe.cook_time_minutes ? `🔥 Cook: ${recipe.cook_time_minutes} min` : '';
+            const totalTime = (recipe.prep_time_minutes && recipe.cook_time_minutes)
+                ? `⏰ Total: ${recipe.prep_time_minutes + recipe.cook_time_minutes} min`
+                : '';
+            const servings = recipe.servings ? `🍽️ Servings: ${recipe.servings}` : '';
+
+            const metaItems = [prepTime, cookTime, totalTime, servings].filter(Boolean);
+            const metaHtml = metaItems.length > 0
+                ? `<div class="recipe-meta-card">${metaItems.map(item => `<div class="meta-item">${item}</div>`).join('')}</div>`
+                : '';
+
+            // Build notes
+            const notesHtml = recipe.notes
+                ? `<div class="recipe-notes"><strong>📝 Notes:</strong> ${recipe.notes}</div>`
+                : '';
+
+            // Build complete HTML
+            content.innerHTML = `
+                <div class="cooking-content">
+                    <h1 class="recipe-title">${recipe.title || 'Recipe'}</h1>
+
+                    ${recipe.description ? `<p style="text-align: center; font-size: 1.1rem; color: #666; margin-bottom: 1rem;">${recipe.description}</p>` : ''}
+
+                    ${metaHtml}
+
+                    <h2 class="section-header">🥘 Ingredients</h2>
+                    <div class="ingredients-list">
+                        ${ingredientsHtml}
+                    </div>
+
+                    <h2 class="section-header">👨‍🍳 Instructions</h2>
+                    <div class="instructions-list">
+                        ${instructionsHtml}
+                    </div>
+
+                    ${notesHtml}
+
+                    <div class="back-to-recipes">
+                        <button onclick="goBack()">← Back to Recipes</button>
+                    </div>
+                </div>
+            `;
+
+            // Update page title
+            document.title = `Cooking: ${recipe.title || 'Recipe'} - Fergi Cooking`;
+        }
+
+        function toggleIngredient(idx) {
+            const item = document.getElementById(`ingredient-${idx}`);
+            if (item) {
+                item.classList.toggle('checked');
+            }
+        }
+
+        function showError(message) {
+            const content = document.getElementById('content');
+            content.innerHTML = `
+                <div class="error">
+                    <h2>⚠️ Error</h2>
+                    <p>${message}</p>
+                    <br>
+                    <button onclick="goBack()" style="background: var(--primary-color); color: white; border: none; padding: 0.75rem 2rem; font-size: 1rem; border-radius: 5px; cursor: pointer;">
+                        ← Back to Recipes
+                    </button>
+                </div>
+            `;
+        }
+
+        function goBack() {
+            // Try to go back in history, or fall back to index
+            if (document.referrer && document.referrer.includes(window.location.hostname)) {
+                window.history.back();
+            } else {
+                window.location.href = '/index.html';
+            }
+        }
+
+        // Wake Lock API to keep screen on while cooking
+        let wakeLock = null;
+
+        async function enableWakeLock() {
+            if ('wakeLock' in navigator) {
+                try {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                    console.log('🔒 Screen wake lock enabled - screen will stay on while cooking!');
+
+                    // Re-enable wake lock if page becomes visible again
+                    document.addEventListener('visibilitychange', async () => {
+                        if (wakeLock !== null && document.visibilityState === 'visible') {
+                            wakeLock = await navigator.wakeLock.request('screen');
+                        }
+                    });
+                } catch (err) {
+                    console.log('Wake Lock not available:', err);
+                }
+            } else {
+                console.log('Wake Lock API not supported on this browser');
+            }
+        }
+
+        // Disable wake lock when leaving page
+        window.addEventListener('beforeunload', () => {
+            if (wakeLock !== null) {
+                wakeLock.release();
+            }
+        });
+    </script>
+</body>
+</html>

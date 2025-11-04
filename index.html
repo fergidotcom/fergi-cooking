@@ -1239,6 +1239,9 @@
                         ` : ''}
 
                         <div class="btn-group">
+                            <button class="btn" onclick="app.openCookingMode(${recipe.id})" style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%); color: white; font-weight: bold; font-size: 1.05rem;">
+                                👨‍🍳 Cooking Mode
+                            </button>
                             <button class="btn btn-primary" onclick="app.printRecipe(${recipe.id})">🖨️ Print Recipe</button>
                             <button class="btn btn-primary" onclick="app.editRecipe(${recipe.id})">Edit Recipe</button>
                             <button class="btn btn-danger" onclick="app.deleteRecipe(${recipe.id})">Delete Recipe</button>
@@ -1535,6 +1538,11 @@
                 // Store recipe ID and redirect to events page
                 localStorage.setItem('pendingRecipeForEvent', recipeId);
                 window.location.href = 'events.html?action=add_recipe&recipe_id=' + recipeId;
+            },
+
+            openCookingMode(recipeId) {
+                // Open cooking.html in new tab/window with recipe ID
+                window.open(`cooking.html?recipe_id=${recipeId}`, '_blank');
             },
 
             printRecipe(recipeId) {
