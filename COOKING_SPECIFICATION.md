@@ -1,348 +1,325 @@
-# Fergi Cooking System - Technical Specification
-**Version:** v2.8.1
-**Status:** Production
-**Live URL:** https://fergi-cooking.netlify.app
-**Created:** October 30, 2025
-**Last Updated:** November 3, 2025
+# Cooking App - Complete Technical Specification
+
+**Project:** Fergi's Recipe Collection
+**Current Version:** v4.0.0
+**Last Updated:** November 4, 2025
+**Type:** Recipe Management Web Application
+**Status:** ✅ Production - https://fergi-cooking.netlify.app
 
 ---
 
 ## Table of Contents
-1. [System Overview](#system-overview)
+
+1. [Overview](#overview)
 2. [Architecture](#architecture)
 3. [Features](#features)
-4. [Technical Stack](#technical-stack)
-5. [Data Model](#data-model)
-6. [API Endpoints](#api-endpoints)
-7. [User Workflows](#user-workflows)
-8. [Deployment](#deployment)
-9. [Configuration](#configuration)
-10. [Security](#security)
+4. [Database Schema](#database-schema)
+5. [API Endpoints](#api-endpoints)
+6. [User Interface](#user-interface)
+7. [Mobile UX](#mobile-ux)
+8. [Data Management](#data-management)
+9. [Deployment](#deployment)
+10. [Configuration](#configuration)
 
 ---
 
-## System Overview
+## Overview
 
 ### Purpose
-The Fergi Cooking System is a comprehensive recipe collection and event management platform designed to:
-- Organize and search a family recipe collection (122 recipes)
-- Plan cooking events with multiple guests
-- Collect guest preferences and dietary restrictions
-- Coordinate potluck-style gatherings with volunteer categories
-- Generate invitation emails with interactive response links
+A personal recipe collection and management system for organizing, searching, and managing family recipes with AI-powered import capabilities and mobile-optimized cooking experience.
 
-### Key Capabilities
-- **Recipe Management:** Browse, search, and view 122 family recipes
-- **Event Planning:** Create events, assign recipes to menus, invite guests
-- **Guest Response System:** Public response page (no login required)
-- **Preference Collection:** Track what guests prefer and will bring
-- **Dietary Tracking:** Collect restrictions and allergies
-- **Volunteer Coordination:** Guests can volunteer to bring specific categories
-- **Email Generation:** Generate HTML emails with clickable recipe links
+### Key Users
+- **Janet** - Primary user, iPhone, adds recipes from her cookbook (85 recipes)
+- **Joe (Fergi)** - Administrator, manages general recipe collection (37 recipes)
+- **Event Guests** - View recipes and respond to event invitations
+
+### Technology Stack
+- **Frontend:** Vanilla JavaScript, HTML5, CSS3
+- **Backend:** Netlify Functions (Node.js)
+- **Database:** Dropbox (recipes.json) + Local SQLite (recipes.db)
+- **AI:** Anthropic Claude API (recipe formatting)
+- **OCR:** Tesseract.js (image text extraction)
+- **Hosting:** Netlify
+- **Storage:** Dropbox API
+- **Version Control:** GitHub
 
 ---
 
 ## Architecture
 
 ### System Architecture
+
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                     Frontend (Static HTML)                   │
-├─────────────────────────────────────────────────────────────┤
-│  index.html          Recipe browsing and search             │
-│  events.html         Event creation and management          │
-│  event-detail.html   Event dashboard and recipe assignment  │
-│  respond.html        Public guest response page             │
-└─────────────────────────────────────────────────────────────┘
-                              ↓ ↑
-                         HTTPS / API
-                              ↓ ↑
-┌─────────────────────────────────────────────────────────────┐
-│              Netlify Functions (Serverless API)              │
-├─────────────────────────────────────────────────────────────┤
-│  get-recipe.js       Get/update single recipe by ID         │
-│  get-recipes.js      Get all recipes with search/filter     │
-│  create-event.js     Create/update events                   │
-│  get-events.js       Retrieve events                        │
-│  event-recipes.js    Add/remove recipes from events         │
-│  record-selection.js Record guest responses                 │
-│  generate-email.js   Generate invitation email HTML         │
-│  statistics.js       Recipe statistics and analytics        │
-└─────────────────────────────────────────────────────────────┘
-                              ↓ ↑
-                         Data Access
-                              ↓ ↑
-┌─────────────────────────────────────────────────────────────┐
-│                      Data Storage                            │
-├─────────────────────────────────────────────────────────────┤
-│  recipes.json        122 recipes bundled with functions     │
-│  Dropbox Storage     events.json, guest-selections.json     │
-│  recipes.db (local)  SQLite database for development        │
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────┐
+│           User Interface Layer                   │
+│  (index.html, add-recipe.html, events.html)     │
+└────────────────┬────────────────────────────────┘
+                 │
+                 │ HTTPS
+                 │
+┌────────────────▼────────────────────────────────┐
+│         Netlify Functions Layer                  │
+│  (19 serverless functions)                      │
+│  - Recipe CRUD                                   │
+│  - Event Management                              │
+│  - AI Integration (Claude API)                   │
+│  - OCR Processing (Tesseract.js)                │
+│  - Contributor Management                        │
+└────────────────┬────────────────────────────────┘
+                 │
+                 │ API Calls
+                 │
+┌────────────────▼────────────────────────────────┐
+│           Data Storage Layer                     │
+│                                                  │
+│  ┌──────────────────┐  ┌─────────────────────┐│
+│  │   Dropbox        │  │  Local SQLite       ││
+│  │  recipes.json    │  │  recipes.db         ││
+│  │  (Production)    │  │  (Development)      ││
+│  └──────────────────┘  └─────────────────────┘│
+└──────────────────────────────────────────────────┘
 ```
 
-### Component Breakdown
+### Data Flow
 
-#### Frontend Layer
-- **Technology:** Pure HTML, CSS, JavaScript (no frameworks)
-- **Design:** Responsive, mobile-friendly
-- **Styling:** CSS custom properties, gradients, modern UI
-- **State Management:** Vanilla JavaScript with localStorage
-- **API Communication:** Fetch API with error handling
+#### Recipe Import Flow
+```
+User uploads file/photo
+        ↓
+extract-file.js (OCR if needed)
+        ↓
+format-recipe.js (Claude API)
+        ↓
+User selects contributor
+        ↓
+User reviews formatted recipe
+        ↓
+add-recipe.js saves to Dropbox
+        ↓
+Recipe appears in main view
+```
 
-#### API Layer
-- **Platform:** Netlify Functions (AWS Lambda under the hood)
-- **Runtime:** Node.js
-- **Authentication:** Dropbox OAuth 2.0 with refresh tokens
-- **Error Handling:** Comprehensive try-catch with detailed logging
-- **CORS:** Enabled for all origins (public guest responses)
-
-#### Data Layer
-- **Primary Storage:** Dropbox (events, guest selections)
-- **Recipe Data:** recipes.json bundled with Netlify Functions (400KB, 122 recipes)
-- **Local Development:** SQLite database (recipes.db)
-- **Caching:** No caching currently (future enhancement)
+#### Recipe Display Flow
+```
+User opens index.html
+        ↓
+get-recipes.js loads from Dropbox
+        ↓
+JavaScript renders recipe cards
+        ↓
+User clicks recipe
+        ↓
+get-recipe.js fetches details
+        ↓
+Modal displays full recipe
+```
 
 ---
 
 ## Features
 
-### 1. Recipe Management
+### Core Features (v4.0)
 
-#### Recipe Browsing
-- **Grid View:** Responsive card layout
-- **Search:** Full-text search across title, ingredients, instructions
-- **Filters:** Cuisine type, meal type, source, dietary preferences
-- **Statistics:** View recipe counts by category
-- **Details View:** Expandable recipe cards with full details
+#### 1. Recipe Browsing
+- **Recipe Cards Grid**
+  - Responsive grid (3 cols desktop, 2 cols tablet, 1 col mobile)
+  - Card displays: title, contributor, prep/cook time, servings, tags
+  - Color-coded contributor badges (Janet = purple)
+  - "Needs Review" warning badge (red)
+  - Hover effects and animations
 
-#### Recipe Data Structure
-Each recipe includes:
-- **Metadata:** Title, description, cuisine, meal type, source
-- **Timing:** Prep time, cook time, total time
-- **Servings:** Number of servings
-- **Ingredients:** Structured list with quantities and units
-- **Instructions:** Step-by-step cooking directions
-- **Tags:** Categorization and search keywords
-- **Images:** Recipe photos (when available)
-- **Ratings:** Star ratings and favorites
+- **Search & Filtering**
+  - Full-text search (title, ingredients, instructions)
+  - Contributor filter dropdown (Janet, Fergi, etc.)
+  - "Needs Review" filter (shows incomplete recipes)
+  - Real-time filtering (no page reload)
 
-#### Janet Mason's Cookbook
-- Special collection of 85 family recipes
-- Extracted from images using OCR and AI
-- Preserved family cooking traditions
-- Dedicated section in the interface
+- **Recipe Detail Modal** ✨ NEW v4.0: Mobile-optimized
+  - Full-screen on mobile with smooth scrolling
+  - Sticky header (title stays visible)
+  - Formatted ingredients list
+  - Step-by-step instructions with numbering
+  - Cooking metadata (times, servings, difficulty)
+  - Action buttons (Cooking Mode, Print, Edit)
+  - iOS smooth scrolling enabled
+  - 44x44px minimum touch targets
 
-### 2. Event Management
+#### 2. Recipe Import ✨ NEW v4.0: Camera Integration
+- **Four Import Methods:**
+  1. **Camera Capture** (Mobile) - Direct photo capture
+  2. **File Upload** - PDF, Word, Images, Text
+  3. **Paste Text** - Copy/paste from websites
+  4. **Manual Entry** - Type recipe directly
 
-#### Event Creation
-- **Basic Info:** Name, date, time, location, description
-- **Guest List:** Optional list of invited guests with names and emails
-- **Volunteer Collection:** Toggle to collect category volunteers
-- **Recipe Assignment:** Add multiple recipes to event menu
-- **Recipe Search:** Filter through 122 recipes as you type
+- **AI-Powered Formatting**
+  - Automatic ingredient extraction
+  - Instruction parsing and numbering
+  - Metadata extraction (times, servings)
+  - Smart text cleanup
 
-#### Event Dashboard
-- View event details
-- See all assigned recipes organized by course type
-- Add/remove recipes from menu
-- Generate invitation emails
-- View guest responses in real-time
-- Track RSVPs and dietary restrictions
+- **OCR Processing**
+  - Tesseract.js integration
+  - Supports JPG, PNG images
+  - 30-60 second processing time
+  - Progress indicators
 
-#### Email Generation
-- **HTML Email:** Beautifully formatted invitation
-- **Recipe Cards:** Each recipe displayed with description
-- **Interactive Buttons:** Click to indicate preference
-- **Volunteer Section:** Category buttons (appetizer, salad, main, side, dessert, beverage)
-- **Dietary Section:** Gluten-free, lactose-free, other
-- **Copy Options:** Plain copy, formatted copy, email client copy
+- **4-Step Import Wizard**
+  1. Choose import method / upload file
+  2. Select contributor
+  3. Review AI-formatted recipe
+  4. Final review and save
 
-### 3. Guest Response System
+#### 3. Mobile Cooking Mode
+- **Dedicated cooking.html interface**
+- Large, readable text (18-28px)
+- Big step numbers (40px circles)
+- Checkable ingredient list
+- Wake Lock API (screen stays on)
+- Shareable URLs (cooking.html?recipe_id=X)
+- "Cooking Mode" button in recipe detail
 
-#### Public Response Page
-- **No Login Required:** Guests respond via simple URL links
-- **Recipe Display:** Shows selected recipe name and description
-- **Loading Screen:** Brief loading while fetching recipe details
-- **Guest Identification:** Dropdown if guest list exists, email entry otherwise
-- **Multiple Response Types:** Prefer, will bring, dietary, volunteer
+#### 4. Event Management
+- **Create Events**
+  - Event name, date, time, location
+  - Recipe assignment (multiple recipes per event)
+  - Guest list management
 
-#### Response Types
+- **Guest Response System**
+  - Public response page (respond.html?event_id=X)
+  - Recipe preference selection
+  - "Will bring" vs "Prefers" options
+  - Custom dish names
+  - Dietary restrictions
+  - Volunteer categories
 
-**1. Preference Selection**
-- Click recipe link in email
-- See recipe name: "❤️ You prefer: Beef Stroganoff"
-- Option to volunteer to bring it
-- Can specify custom dish if bringing something different
+- **Event Dashboard**
+  - Guest response tracking
+  - Recipe assignments
+  - Email generation with multiple copy methods
+  - Response statistics
 
-**2. Custom Dish**
-- Checkbox: "I'll bring this dish"
-- Optional field: "What will you bring?"
-- Leave blank = bring selected recipe
-- Enter text = bring different dish
-- Example: Prefer Beef Stroganoff, bring Fish
+#### 5. Contributor Management
+- **Public Access** (no authentication required)
+- CRUD operations (Create, Read, Update, Delete)
+- Contributor statistics (recipe counts)
+- Automatic contributor assignment during import
+- Filter recipes by contributor
 
-**3. Volunteer Categories**
-- Click category button (appetizer, salad, main, side, dessert, beverage)
-- Enter specific dish name
-- Multiple categories allowed
-
-**4. Dietary Restrictions**
-- Free-form text field
-- Common options: Gluten-free, lactose-free, vegetarian, vegan, allergies
-- Multiple restrictions can be entered
-
-#### Response Summary
-- **Success Message:** "Thank You! Your response has been recorded"
-- **All Responses:** Shows all selections for this guest at this event
-- **Update Anytime:** Click email links again to add more responses
-- **Clear Display:** Icons and formatting for each response type
-
-### 4. Dual Loading Strategy (Reliability)
-
-#### Strategy 1: Direct Recipe Load
-```javascript
-fetch('/.netlify/functions/get-recipe/:id')
-→ If successful: Use recipe data
-→ If failed: Try Strategy 2
-```
-
-#### Strategy 2: Fallback to All Recipes
-```javascript
-fetch('/.netlify/functions/get-recipes')
-→ Load all 122 recipes
-→ Find recipe by ID
-→ If found: Use recipe data
-→ If not found: Show error
-```
-
-This dual approach ensures 99%+ success rate even if one endpoint has issues.
+#### 6. Data Management ✨ NEW v4.0
+- **Cleanup Script** (scripts/cleanup_recipes.py)
+  - Remove non-recipes (books, articles)
+  - Fix OCR errors (l→1, O→0, etc.)
+  - Standardize ingredients
+  - Extract attributions to metadata
+  - Verify contributor assignments
+  - Flag incomplete recipes
+  - Automatic backup
+  - Comprehensive reporting
 
 ---
 
-## Technical Stack
+## Database Schema
 
-### Frontend
-- **HTML5:** Semantic markup, accessible
-- **CSS3:** Custom properties, gradients, flexbox, grid
-- **JavaScript ES6+:** Async/await, fetch, modules, destructuring
-- **No Dependencies:** Pure vanilla JavaScript (no jQuery, React, etc.)
+### Recipe Object Schema
 
-### Backend
-- **Node.js:** Runtime for Netlify Functions
-- **Netlify Functions:** Serverless computing (AWS Lambda)
-- **Fetch API:** HTTP requests (node-fetch package)
-
-### Storage
-- **Dropbox API:** Cloud storage for events and selections
-- **SQLite:** Local development database
-- **JSON Files:** Recipe data bundled with functions
-
-### Deployment
-- **Netlify:** Hosting and serverless functions
-- **Git:** Version control (GitHub @fergidotcom)
-- **DNS:** fergi-cooking.netlify.app
-
-### Development Tools
-- **Netlify CLI:** Local development and deployment
-- **jq:** JSON processing and testing
-- **curl:** API testing
-- **Python:** Scripts for data processing
-
----
-
-## Data Model
-
-### Recipe Schema
 ```json
 {
-  "id": 8,
-  "title": "Beef Stroganoff",
-  "description": "Rich Russian-inspired comfort food...",
-  "cuisine_type": "Russian",
-  "meal_type": "main",
-  "course_type": "main",
-  "prep_time_minutes": 20,
-  "cook_time_minutes": 30,
-  "total_time_minutes": 50,
-  "servings": 6,
-  "difficulty": "medium",
-  "source_attribution": "NYT Cooking",
+  "id": 1,
+  "title": "Baking Powder Biscuits",
+  "description": "Traditional Southern-style biscuits",
   "ingredients": [
-    {
-      "ingredient_name": "beef sirloin",
-      "quantity": 1.5,
-      "unit": "pounds"
-    }
+    "2 cups all-purpose flour",
+    "1 tablespoon baking powder",
+    "1 teaspoon salt",
+    "1/2 cup cold butter, cubed",
+    "3/4 cup whole milk"
   ],
   "instructions": [
-    {
-      "step_number": 1,
-      "instruction_text": "Slice beef into thin strips..."
-    }
+    "Preheat oven to 450°F (230°C)",
+    "In a large bowl, whisk together flour, baking powder, and salt",
+    "Cut cold butter into flour mixture until it resembles coarse crumbs",
+    "Make a well in center and pour in milk. Stir until just combined",
+    "Turn dough onto floured surface and knead gently 3-4 times",
+    "Pat dough to 3/4-inch thickness and cut into rounds",
+    "Place on ungreased baking sheet and bake 10-12 minutes until golden"
   ],
-  "tags": ["beef", "comfort food", "quick"],
+  "prep_time_minutes": 15,
+  "cook_time_minutes": 12,
+  "total_time_minutes": 27,
+  "servings": 12,
+  "difficulty": "Easy",
+  "cuisine_type": "American",
+  "meal_type": "Side",
+  "contributor": "Janet",
+  "source_attribution": "Janet Mason's Cookbook",
+  "tags": ["biscuits", "bread", "southern", "quick bread"],
+  "calories_per_serving": 180,
+  "notes": "Keep butter cold for flakier biscuits",
+  "image_url": null,
+  "created_at": "2025-01-15T10:30:00Z",
+  "updated_at": "2025-11-04T14:22:00Z",
+  "favorite": false,
   "rating": 5,
-  "favorite": true,
-  "date_added": "2024-10-15",
-  "date_modified": "2025-11-03"
+  "needs_review": false
 }
 ```
 
-### Event Schema
+### Event Object Schema
+
 ```json
 {
-  "id": "evt_123",
+  "id": 1,
   "name": "Thanksgiving Dinner 2025",
-  "event_date": "2025-11-28",
-  "event_time": "18:00",
-  "location": "Casa Fergi: 2232 Wilderness Arroyo",
-  "description": "Annual family Thanksgiving celebration",
-  "collect_volunteers": true,
-  "guest_list": [
+  "date": "2025-11-28",
+  "time": "14:00",
+  "location": "Ferguson House",
+  "recipes": [5, 12, 23, 45],
+  "guests": [
     {
       "name": "Murray",
-      "email": "murray@example.com"
+      "email": "murray@example.com",
+      "responses": {
+        "5": {
+          "type": "prefer",
+          "recipe_id": 5,
+          "custom_dish": null
+        },
+        "12": {
+          "type": "will_bring",
+          "recipe_id": 12,
+          "custom_dish": "Fish (different than Beef Stroganoff)"
+        }
+      },
+      "dietary_restrictions": "None",
+      "will_bring_own_dish": false,
+      "volunteer_categories": ["Setup"]
     }
   ],
-  "recipes": [
-    {
-      "recipe_id": 8,
-      "course_type": "main"
-    }
-  ],
-  "created_at": "2025-11-01T10:00:00Z",
-  "updated_at": "2025-11-03T15:30:00Z"
+  "created_at": "2025-10-15T10:00:00Z",
+  "updated_at": "2025-11-01T12:00:00Z"
 }
 ```
 
-### Guest Selection Schema
+### Contributor Object Schema
+
 ```json
 {
-  "event_id": "evt_123",
-  "guest_email": "murray@example.com",
-  "guest_name": "Murray",
-  "selections": [
-    {
-      "selection_type": "prefer",
-      "recipe_id": 8,
-      "recipe_title": "Beef Stroganoff",
-      "timestamp": "2025-11-03T16:00:00Z"
-    },
-    {
-      "selection_type": "will_bring",
-      "bringing_own_dish_name": "Fish",
-      "bringing_own_dish_description": "",
-      "timestamp": "2025-11-03T16:01:00Z"
-    },
-    {
-      "selection_type": "dietary_restriction",
-      "notes": "Gluten-free",
-      "timestamp": "2025-11-03T16:02:00Z"
-    }
-  ]
+  "name": "Janet",
+  "created_at": "2025-10-30T10:00:00Z",
+  "recipe_count": 89
 }
 ```
+
+### Database Statistics
+
+**Current Data (v4.0):**
+- Total Recipes: 122
+- Contributors:
+  - Janet: 89 recipes
+  - Fergi: 33 recipes
+- Needs Review: 23 recipes
+- Cuisine Types: American, Italian, Indian, Caribbean, French, etc.
+- Meal Types: Main, Side, Dessert, Appetizer, Breakfast
 
 ---
 
@@ -350,12 +327,134 @@ This dual approach ensures 99%+ success rate even if one endpoint has issues.
 
 ### Recipe Endpoints
 
-#### GET /get-recipe/:id
-Get single recipe by ID.
+#### GET `/api/get-recipes`
+**Description:** Get all recipes or search/filter
 
-**Request:**
+**Query Parameters:**
+- `search` - Search query (title, ingredients, instructions)
+- `contributor` - Filter by contributor name
+- `needs_review` - Filter incomplete recipes (true/false)
+
+**Response:**
+```json
+{
+  "success": true,
+  "recipes": [...],
+  "count": 122
+}
 ```
-GET /.netlify/functions/get-recipe/8
+
+#### GET `/api/get-recipe?id={id}`
+**Description:** Get single recipe by ID
+
+**Response:**
+```json
+{
+  "success": true,
+  "recipe": {...}
+}
+```
+
+#### PUT `/api/get-recipe?id={id}`
+**Description:** Update single recipe
+
+**Body:** Complete recipe object
+
+**Response:**
+```json
+{
+  "success": true,
+  "recipe": {...}
+}
+```
+
+#### POST `/api/add-recipe`
+**Description:** Add new recipe
+
+**Body:** Recipe object (without ID)
+
+**Response:**
+```json
+{
+  "success": true,
+  "recipe_id": 123
+}
+```
+
+#### POST `/api/update-recipe`
+**Description:** Update existing recipe
+
+**Body:** Recipe object with ID
+
+**Response:**
+```json
+{
+  "success": true,
+  "recipe": {...}
+}
+```
+
+#### POST `/api/save-recipes`
+**Description:** Bulk save recipes to Dropbox
+
+**Body:**
+```json
+{
+  "recipes": [...]
+}
+```
+
+#### GET `/api/load-recipes`
+**Description:** Load recipes from Dropbox
+
+**Response:**
+```json
+{
+  "success": true,
+  "recipes": [...]
+}
+```
+
+#### GET `/api/statistics`
+**Description:** Get recipe statistics
+
+**Response:**
+```json
+{
+  "success": true,
+  "total_recipes": 122,
+  "by_contributor": {
+    "Janet": 89,
+    "Fergi": 33
+  },
+  "by_cuisine": {...},
+  "by_meal_type": {...}
+}
+```
+
+### Import Endpoints
+
+#### POST `/api/extract-file`
+**Description:** Extract text from uploaded file (PDF, Word, Image, Text)
+
+**Body:** FormData with file
+
+**Response:**
+```json
+{
+  "success": true,
+  "text": "Extracted recipe text..."
+}
+```
+
+#### POST `/api/format-recipe`
+**Description:** Format recipe text using Claude AI
+
+**Body:**
+```json
+{
+  "text": "Raw recipe text..."
+}
 ```
 
 **Response:**
@@ -363,99 +462,86 @@ GET /.netlify/functions/get-recipe/8
 {
   "success": true,
   "recipe": {
-    "id": 8,
-    "title": "Beef Stroganoff",
-    "description": "Rich Russian-inspired comfort food...",
-    ...
+    "title": "...",
+    "ingredients": [...],
+    "instructions": [...]
   }
-}
-```
-
-#### GET /get-recipes
-Get all recipes with optional search and pagination.
-
-**Request:**
-```
-GET /.netlify/functions/get-recipes?search=beef&limit=10
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "count": 10,
-  "total": 122,
-  "recipes": [...]
 }
 ```
 
 ### Event Endpoints
 
-#### POST /create-event
-Create new event.
+#### POST `/api/create-event`
+**Description:** Create or update event
 
-**Request:**
-```json
-{
-  "name": "Thanksgiving Dinner",
-  "event_date": "2025-11-28",
-  "event_time": "18:00",
-  "location": "Casa Fergi",
-  "guest_list": [...]
-}
-```
+**Body:** Event object
 
 **Response:**
 ```json
 {
   "success": true,
-  "eventId": "evt_123",
-  "message": "Event created successfully"
+  "event": {...}
 }
 ```
 
-#### GET /get-events
-Get all events or single event by ID.
-
-**Request:**
-```
-GET /.netlify/functions/get-events?id=evt_123
-```
+#### GET `/api/get-events`
+**Description:** Get all events
 
 **Response:**
 ```json
 {
-  "id": "evt_123",
-  "name": "Thanksgiving Dinner",
-  ...
+  "success": true,
+  "events": [...]
 }
 ```
 
-#### POST /event-recipes
-Add or remove recipes from event.
+#### POST `/api/save-events`
+**Description:** Save events to Dropbox
 
-**Request:**
+**Body:**
 ```json
 {
-  "event_id": "evt_123",
-  "recipe_id": 8,
-  "action": "add"
+  "events": [...]
 }
 ```
 
-### Guest Response Endpoints
+#### POST `/api/event-recipes`
+**Description:** Manage recipes in event
 
-#### POST /record-selection
-Record guest response.
-
-**Request:**
+**Body:**
 ```json
 {
-  "event_id": "evt_123",
-  "guest_email": "murray@example.com",
+  "event_id": 1,
+  "action": "add" | "remove",
+  "recipe_id": 5
+}
+```
+
+#### POST `/api/record-selection`
+**Description:** Record guest recipe selection
+
+**Body:**
+```json
+{
+  "event_id": 1,
   "guest_name": "Murray",
-  "selection_type": "prefer",
-  "recipe_id": 8
+  "guest_email": "murray@example.com",
+  "recipe_id": 5,
+  "selection_type": "prefer" | "will_bring",
+  "custom_dish_name": "Fish",
+  "dietary_restrictions": "None",
+  "will_bring_own_dish": false,
+  "volunteer_categories": ["Setup"]
+}
+```
+
+#### POST `/api/generate-email`
+**Description:** Generate event invitation email
+
+**Body:**
+```json
+{
+  "event": {...}
 }
 ```
 
@@ -463,434 +549,749 @@ Record guest response.
 ```json
 {
   "success": true,
-  "message": "Selection recorded"
+  "subject": "...",
+  "body": "..."
 }
 ```
 
-#### GET /record-selection
-Get guest selections for event.
+### Contributor Endpoints
 
-**Request:**
-```
-GET /.netlify/functions/record-selection?event_id=evt_123&guest_email=murray@example.com
-```
+#### GET `/api/manage-contributors`
+**Description:** Get all contributors
 
 **Response:**
 ```json
-[
-  {
-    "selection_type": "prefer",
-    "recipe_title": "Beef Stroganoff",
-    ...
-  }
-]
+{
+  "success": true,
+  "contributors": ["Janet", "Fergi", "Nancy", "Lauren"]
+}
 ```
 
-#### GET /generate-email
-Generate invitation email HTML.
+#### POST `/api/manage-contributors`
+**Description:** Add new contributor
 
-**Request:**
-```
-GET /.netlify/functions/generate-email?id=evt_123&email=murray@example.com
+**Body:**
+```json
+{
+  "action": "add",
+  "name": "New Contributor"
+}
 ```
 
-**Response:**
-```html
-<!DOCTYPE html>
-<html>
-  <body>
-    <h1>🎉 You're Invited!</h1>
-    ...
-  </body>
-</html>
+### Authentication Endpoints (v3.1 - Backend Only)
+
+#### POST `/api/send-verification-code`
+**Description:** Send 6-digit verification code via email
+
+**Body:**
+```json
+{
+  "email": "user@example.com"
+}
+```
+
+#### POST `/api/verify-code`
+**Description:** Verify code and create session
+
+**Body:**
+```json
+{
+  "email": "user@example.com",
+  "code": "123456"
+}
+```
+
+**Note:** Authentication UI not yet implemented (Phase 2 pending).
+
+---
+
+## User Interface
+
+### Pages
+
+#### 1. index.html - Main Recipe Browser
+**Purpose:** Browse and search recipes
+
+**Sections:**
+- Header with title and version
+- Navigation bar with filters and search
+- Recipe cards grid
+- Recipe detail modal
+- Dropbox status indicator
+
+**Key Elements:**
+- Search bar (full-text search)
+- Contributor filter dropdown
+- "Needs Review" filter button
+- "Add Recipe" button
+- Recipe cards (responsive grid)
+- Recipe detail modal (mobile-optimized v4.0)
+
+**Mobile Optimizations (v4.0):**
+- Full-screen modal (100vh)
+- Sticky recipe header
+- Smooth scrolling
+- 44x44px touch targets
+- Vertical button stacks
+
+#### 2. add-recipe.html - Recipe Import Wizard
+**Purpose:** Import new recipes
+
+**Steps:**
+1. **Import Method**
+   - Camera capture (mobile) ✨ NEW v4.0
+   - File upload
+   - Paste text
+
+2. **Contributor Selection**
+   - Choose existing contributor
+   - Or add new contributor
+
+3. **Format Recipe**
+   - AI formats extracted text
+   - Shows processing indicator
+   - Displays formatted recipe preview
+
+4. **Review & Save**
+   - Edit if needed
+   - Save to database
+   - Return to main page
+
+**Features:**
+- 4-step progress indicator
+- File type detection
+- OCR progress feedback
+- AI formatting status
+- Form validation
+
+#### 3. cooking.html - Mobile Cooking Mode
+**Purpose:** Step-by-step cooking interface
+
+**Features:**
+- Large, readable text (18-28px)
+- Big step numbers (40px circles)
+- Ingredient checkboxes
+- Wake Lock (screen stays on)
+- Recipe title at top
+- Progress through steps
+- Shareable URL (cooking.html?recipe_id=X)
+
+**Design:**
+- Minimal distractions
+- Maximum readability
+- Optimized for 2-foot viewing distance
+- Works offline after first load
+
+#### 4. events.html - Event Management
+**Purpose:** Create and manage cooking events
+
+**Features:**
+- Event list view
+- Create new event button
+- Event form (name, date, time, location)
+- Recipe assignment interface
+- Guest management
+- Link to event dashboard
+
+#### 5. event-detail.html - Event Dashboard
+**Purpose:** View event details and guest responses
+
+**Features:**
+- Event information display
+- Recipe list with assignments
+- Guest response tracking
+- Email generation
+- Response statistics
+- Multiple copy methods for email
+
+#### 6. respond.html - Guest Response Page
+**Purpose:** Public page for guests to respond
+
+**Features:**
+- Event information display
+- Recipe selection interface
+- Preference vs. Will Bring options
+- Custom dish name input
+- Dietary restrictions field
+- Volunteer category selection
+- Submit response button
+
+**URL Format:** `respond.html?event_id=X`
+
+### Design System
+
+#### Colors
+```css
+--primary-color: #2c3e50;    /* Headers, text */
+--secondary-color: #e74c3c;  /* Accent, buttons */
+--accent-color: #3498db;     /* Links, highlights */
+--success-color: #27ae60;    /* Success states */
+--warning-color: #f39c12;    /* Warnings, alerts */
+--background: #ecf0f1;       /* Page background */
+--card-background: #ffffff;  /* Card backgrounds */
+--text-color: #2c3e50;       /* Primary text */
+--text-muted: #7f8c8d;       /* Secondary text */
+--border-color: #bdc3c7;     /* Borders, dividers */
+```
+
+#### Typography
+```css
+/* Desktop */
+--font-size-h1: 2.5rem;
+--font-size-h2: 2rem;
+--font-size-h3: 1.5rem;
+--font-size-body: 1rem;
+--line-height: 1.6;
+
+/* Mobile (v4.0) */
+--font-size-h2-mobile: 1.5rem;
+--font-size-body-mobile: 1rem;
+--line-height-mobile: 1.6;
+```
+
+#### Spacing
+```css
+--spacing-xs: 0.5rem;
+--spacing-sm: 1rem;
+--spacing-md: 2rem;
+--spacing-lg: 3rem;
+
+/* Mobile touch targets */
+--touch-target-min: 44px;  /* iOS HIG */
+```
+
+#### Shadows
+```css
+--shadow: 0 2px 10px rgba(0,0,0,0.1);
+--shadow-hover: 0 4px 20px rgba(0,0,0,0.15);
 ```
 
 ---
 
-## User Workflows
+## Mobile UX
 
-### Host Workflow: Creating an Event
+### Mobile-First Design Principles (v4.0)
 
-1. **Navigate to Events** → Click "Create Event" button
-2. **Enter Event Details:**
-   - Event name: "Thanksgiving Dinner 2025"
-   - Date: November 28, 2025
-   - Time: 6:00 PM (defaults to 6:00 PM)
-   - Location: Casa Fergi address
-   - Description: Event details
-3. **Add Guest List (Optional):**
-   - Click "+ Add Guest"
-   - Enter name and email for each guest
-   - Benefits: Guest dropdown on response page
-4. **Check "Collect Volunteers"** if you want category buttons
-5. **Click "Save Event"** → Event dashboard opens
-6. **Add Recipes to Menu:**
-   - Click "+ Add Recipe" button
-   - Search/filter through 122 recipes
-   - Click recipes to add to event
-   - Recipes organized by course type
-7. **Generate Email:**
-   - Click "Generate Email" button
-   - Preview HTML email with all recipes
-   - Copy via one of three methods:
-     - Plain copy
-     - Formatted copy (preserves styling)
-     - Email client copy (opens mail app)
-8. **Send to Guests** → Paste into email client and send
+#### 1. Touch Targets
+- Minimum 44x44px (iOS Human Interface Guidelines)
+- Applies to: buttons, links, close buttons, checkboxes
+- Generous padding around interactive elements
 
-### Guest Workflow: Responding to Invitation
+#### 2. Scrolling
+- iOS smooth scrolling enabled (`-webkit-overflow-scrolling: touch`)
+- Full-screen modals on mobile (100vh)
+- Sticky headers for context
+- Bottom padding for comfortable scrolling
 
-1. **Receive Email** with event invitation
-2. **Browse Recipes** in email, organized by course
-3. **Click "❤️ I prefer this" button** on desired recipe
-4. **Response Page Loads:**
-   - Shows: "❤️ You prefer: Beef Stroganoff"
-   - Displays recipe description
-5. **Select Who You Are:**
-   - If guest list exists: Choose name from dropdown
-   - If no guest list: Enter email and name
-6. **Optionally Check "I'll bring this dish":**
-   - Leave blank = bringing the recipe itself
-   - Enter text = bringing something different
-   - Example: Type "Fish" to bring fish instead
-7. **Add Dietary Restrictions (Optional):**
-   - Free-form text field
-   - Enter any restrictions or allergies
-8. **Click "Submit Response"** → Success message displays
-9. **View Summary** of all your responses for this event
-10. **Update Anytime** by clicking email links again
+#### 3. Layout
+- Single column on mobile (<768px)
+- Vertical button stacks
+- Column layout for metadata
+- Full-width forms
 
-### Guest Workflow: Volunteering Category
+#### 4. Typography
+- Minimum 16px body text (prevents zoom on iOS)
+- Larger headings (1.5rem on mobile)
+- Comfortable line-height (1.6)
+- Adequate contrast ratios
 
-1. **Receive Email** with volunteer section (if enabled)
-2. **Click Category Button:**
-   - 🥗 Appetizer
-   - 🥬 Salad
-   - 🍖 Main Course
-   - 🥔 Side Dish
-   - 🍰 Dessert
-   - 🍷 Beverage
-3. **Enter Your Info:**
-   - Email address
-   - Name (optional)
-   - Specific dish you'll bring
-4. **Submit** → Recorded as volunteer for that category
+#### 5. Navigation
+- Fixed navigation bar (sticky at top)
+- Large tap targets for filters
+- Clear visual hierarchy
+- Breadcrumb trails
+
+### Responsive Breakpoints
+
+```css
+/* Mobile First */
+/* Base styles: 320px - 767px */
+
+@media (min-width: 768px) {
+  /* Tablet: 768px - 1023px */
+  /* 2-column grid */
+}
+
+@media (min-width: 1024px) {
+  /* Desktop: 1024px+ */
+  /* 3-column grid */
+}
+```
+
+### Device Testing Matrix
+
+**iOS Devices (Priority):**
+- iPhone SE (375x667)
+- iPhone 12/13/14 (390x844)
+- iPhone 14 Pro Max (430x932)
+- iPhone 15 Pro (393x852)
+- iPad Air (820x1180)
+
+**Android Devices:**
+- Pixel 6 (412x915)
+- Samsung S21 (384x854)
+
+**Browsers:**
+- Safari iOS (primary)
+- Chrome iOS
+- Chrome Android
+
+### Camera Integration (v4.0)
+
+**Device Detection:**
+```javascript
+const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+const hasCamera = 'mediaDevices' in navigator &&
+                  'getUserMedia' in navigator.mediaDevices;
+```
+
+**Camera Input:**
+```html
+<input type="file" accept="image/*" capture="environment">
+```
+
+**Features:**
+- Auto-shows on mobile devices
+- Uses rear camera by default
+- Fallback to photo picker if unavailable
+- Integrates with existing OCR pipeline
+
+---
+
+## Data Management
+
+### Storage Architecture
+
+#### Production Storage: Dropbox
+**Path:** `/Apps/Reference Refinement/recipes.json`
+**Shared with:** Reference Refinement project
+**Access:** OAuth 2.0 with auto-refresh tokens
+
+**Advantages:**
+- Real-time sync across devices
+- No redeployment needed for data updates
+- Shared data model with Reference Refinement
+- Automatic backup and versioning
+- Accessible from multiple projects
+
+**Structure:**
+```json
+{
+  "recipes": [...],
+  "metadata": {
+    "total_count": 122,
+    "last_updated": "2025-11-04T14:30:00Z",
+    "version": "4.0.0",
+    "contributor_counts": {
+      "Janet": 89,
+      "Fergi": 33
+    }
+  }
+}
+```
+
+#### Development Storage: SQLite
+**Path:** `recipes.db` (local only)
+**Purpose:** Local development and testing
+
+**Tables:**
+- recipes
+- ingredients
+- instructions
+- tags
+- cooking_log
+- recipe_images
+- recipes_fts (full-text search)
+
+**Export:** `python3 export_to_json.py` → recipes.json
+
+### Data Synchronization
+
+**Upload to Dropbox:**
+```bash
+python3 upload_recipes_to_dropbox.py
+```
+
+**Netlify Function Access:**
+- Functions read from Dropbox via OAuth
+- Auto-refresh tokens (lib/dropbox-auth.js)
+- No redeployment needed for data changes
+
+### Backup Strategy
+
+**Automatic Backups:**
+- Cleanup script creates backup before changes
+- Format: `recipes_backup_YYYYMMDD_HHMMSS.json`
+
+**Manual Backups:**
+```bash
+# From Dropbox
+python3 -c "
+import dropbox, json, os
+dbx = dropbox.Dropbox(os.environ['DROPBOX_ACCESS_TOKEN'])
+_, res = dbx.files_download('/Apps/Reference Refinement/recipes.json')
+with open('backup.json', 'wb') as f:
+    f.write(res.content)
+"
+```
+
+**Version Control:**
+- All code in GitHub
+- Tagged releases (v3.1.6, v4.0.0, etc.)
+- Session summaries document changes
+
+### Data Cleanup (v4.0)
+
+**Script:** `scripts/cleanup_recipes.py`
+
+**Operations:**
+1. **Validation**
+   - Verify recipe structure
+   - Remove non-recipes (books, articles)
+   - Check required fields
+
+2. **OCR Error Fixing**
+   - l → 1 (lowercase L to number)
+   - O → 0 (uppercase O to zero)
+   - ll → 11, OO → 00
+
+3. **Standardization**
+   - Ingredient formatting
+   - Measurement units
+   - Cooking times
+   - Servings
+
+4. **Attribution Extraction**
+   - Move attributions from instructions to metadata
+   - Patterns: "Recipe from X", "By X", "Source: X"
+
+5. **Contributor Verification**
+   - Ensure correct assignments
+   - Expected: 85 Janet / 37 Fergi
+
+6. **Metadata Validation**
+   - Times: 0-720 minutes
+   - Servings: 1-100
+   - Required fields present
+
+**Safety:**
+- Automatic backup before execution
+- Comprehensive validation
+- Detailed reporting
+- Can be run multiple times
+
+**Usage:**
+```bash
+export DROPBOX_ACCESS_TOKEN="your_token"
+python3 scripts/cleanup_recipes.py
+```
 
 ---
 
 ## Deployment
 
-### Production Environment
+### Netlify Configuration
 
-**Platform:** Netlify
+**Site Name:** fergi-cooking
 **URL:** https://fergi-cooking.netlify.app
-**Admin Panel:** https://app.netlify.com/projects/fergi-cooking
-**Account:** fergidotcom@gmail.com
+**Build Command:** None (direct deployment)
+**Publish Directory:** `.` (root)
+**Functions Directory:** `netlify/functions`
 
-### Deploy Command
-```bash
-netlify deploy --prod --dir="." --message="Deploy description"
-```
-
-### Build Configuration
 **netlify.toml:**
 ```toml
 [build]
-  publish = "."
   functions = "netlify/functions"
+  publish = "."
 
 [functions]
-  included_files = ["recipes.json"]
-```
+  # Include recipes.json in function bundles
+  included_files = ["recipes.json", "netlify/functions/data/**"]
 
-### Deployment Process
-1. Local changes committed to Git
-2. `netlify deploy --prod` command executed
-3. Functions bundled with recipes.json (400KB)
-4. 13 serverless functions deployed
-5. Static files (HTML, CSS, JS) uploaded to CDN
-6. Deploy completes in ~25 seconds
-7. Live at https://fergi-cooking.netlify.app
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+```
 
 ### Environment Variables
-Configured in Netlify Dashboard:
-- `DROPBOX_REFRESH_TOKEN` - OAuth refresh token for Dropbox API
-- `DROPBOX_CLIENT_ID` - Dropbox app client ID
-- `DROPBOX_CLIENT_SECRET` - Dropbox app client secret
 
-### Local Development
-```bash
-# Install Netlify CLI
-npm install -g netlify-cli
-
-# Start local dev server
-netlify dev
-
-# Access at http://localhost:8888
-# Functions run on http://localhost:8888/.netlify/functions/
+**Required in Netlify:**
 ```
+DROPBOX_ACCESS_TOKEN=xxx           # Dropbox OAuth token
+DROPBOX_REFRESH_TOKEN=xxx          # Auto-refresh token
+DROPBOX_APP_KEY=xxx                # Dropbox app key
+DROPBOX_APP_SECRET=xxx             # Dropbox app secret
+ANTHROPIC_API_KEY=xxx              # Claude AI API key
+```
+
+### Deployment Commands
+
+**Local Testing:**
+```bash
+netlify dev
+# Opens at http://localhost:8888
+```
+
+**Deploy to Production:**
+```bash
+netlify deploy --prod --dir="." --message="Deploy message"
+```
+
+**Deploy Preview:**
+```bash
+netlify deploy --dir="." --message="Preview message"
+```
+
+### CI/CD Pipeline
+
+**GitHub Integration:**
+- Auto-deploy on push to `main` branch
+- Preview deploys for pull requests
+- Build logs in Netlify dashboard
+
+**Deployment Process:**
+1. Push to GitHub
+2. Netlify detects change
+3. Bundles functions (includes recipes.json)
+4. Deploys functions (19 total)
+5. Deploys static files
+6. Updates live site
+
+**Build Time:** ~7 seconds
+**Function Bundle Time:** ~2 seconds
+
+### Monitoring
+
+**Netlify Dashboard:**
+- Build logs: https://app.netlify.com/projects/fergi-cooking/deploys
+- Function logs: https://app.netlify.com/projects/fergi-cooking/logs/functions
+- Analytics: https://app.netlify.com/projects/fergi-cooking/analytics
+
+**Key Metrics:**
+- Page load time: <1s
+- Function cold start: <500ms
+- Function warm: <100ms
+- Recipe modal load: <500ms
 
 ---
 
 ## Configuration
 
-### Netlify Configuration (netlify.toml)
-```toml
-[build]
-  publish = "."
-  functions = "netlify/functions"
+### File Structure
 
-[functions]
-  included_files = ["recipes.json"]
-
-[[redirects]]
-  from = "/api/recipes/:id"
-  to = "/.netlify/functions/get-recipe/:id"
-  status = 200
-
-[[redirects]]
-  from = "/api/recipes"
-  to = "/.netlify/functions/get-recipes"
-  status = 200
-
-[[headers]]
-  for = "/api/*"
-  [headers.values]
-    Access-Control-Allow-Origin = "*"
-    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
+```
+Cooking/
+├── index.html                      # Main recipe browser
+├── add-recipe.html                 # Recipe import wizard
+├── cooking.html                    # Mobile cooking mode
+├── events.html                     # Event management
+├── event-detail.html               # Event dashboard
+├── respond.html                    # Guest response page
+├── recipes.json                    # Recipe data (122 recipes)
+├── recipes.db                      # SQLite database (local)
+├── netlify.toml                    # Netlify configuration
+├── CLAUDE.md                       # Project documentation
+├── DEPLOYMENT.md                   # Deployment guide
+├── COOKING_SPECIFICATION.md        # This file
+├── COOKING_HISTORY.md              # Version history
+├── SESSION_SUMMARY_*.md            # Session documentation
+├── QUICK_START_V4.0.md            # Quick reference
+├── netlify/functions/              # 19 serverless functions
+│   ├── lib/
+│   │   └── dropbox-auth.js        # OAuth helper
+│   ├── get-recipe.js              # Get/update single recipe
+│   ├── get-recipes.js             # Get all/search recipes
+│   ├── save-recipes.js            # Bulk save
+│   ├── load-recipes.js            # Load from Dropbox
+│   ├── add-recipe.js              # Add new recipe
+│   ├── update-recipe.js           # Update recipe
+│   ├── extract-file.js            # File text extraction
+│   ├── format-recipe.js           # AI formatting
+│   ├── manage-contributors.js     # Contributor CRUD
+│   ├── create-event.js            # Create/update events
+│   ├── get-events.js              # Get events
+│   ├── save-events.js             # Save to Dropbox
+│   ├── event-recipes.js           # Event recipe management
+│   ├── record-selection.js        # Guest responses
+│   ├── generate-email.js          # Event emails
+│   ├── send-verification-code.js  # Email codes (v3.1)
+│   ├── verify-code.js             # Validate codes (v3.1)
+│   ├── statistics.js              # Recipe stats
+│   └── data/
+│       └── contributors.json      # Contributor list
+├── scripts/
+│   ├── cleanup_recipes.py         # Data cleanup script (v4.0)
+│   ├── README_CLEANUP.md          # Cleanup documentation
+│   ├── fix_contributors.py        # Contributor assignment
+│   ├── reformat_instructions.py   # Instruction reformatter
+│   ├── export_to_json.py          # DB to JSON export
+│   └── upload_recipes_to_dropbox.py # Upload to Dropbox
+└── *.pdf, *.pages                 # Original recipe files
 ```
 
-### Dropbox Configuration
-**App Name:** Reference Refinement
-**Storage Path:** `/Apps/Reference Refinement/`
-**Files:**
-- `events.json` - All events
-- `guest-selections.json` - All guest responses
-- `recipes.json` - Recipe data (also bundled with functions)
+### Dependencies
 
-**OAuth Flow:**
-1. User authorizes app (one-time)
-2. Refresh token stored in Netlify environment
-3. Functions auto-refresh access token as needed
-4. No token expiration issues
+**Frontend:**
+- No build step required
+- Vanilla JavaScript (ES6+)
+- HTML5, CSS3
+- Web APIs: Fetch, File, MediaDevices
+
+**Backend (Netlify Functions):**
+```json
+{
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.9.0",
+    "dropbox": "^10.34.0",
+    "pdf-parse": "^1.1.1",
+    "mammoth": "^1.6.0",
+    "tesseract.js": "^5.0.0"
+  }
+}
+```
+
+**Python Scripts:**
+```
+dropbox==11.36.2
+```
+
+### Version History
+
+- **v1.0** - Initial SQLite database
+- **v2.0** - Web interface and search
+- **v2.8** - Event management
+- **v3.0** - Recipe import wizard with AI
+- **v3.1** - Contributor management, auth backend
+- **v4.0** - Mobile UX fixes, camera integration ✨ Current
+
+---
+
+## Performance Specifications
+
+### Target Metrics
+
+**Page Load:**
+- First Paint: <1.0s
+- Time to Interactive: <2.0s
+- Total Page Size: <500KB
+
+**Recipe Modal:**
+- Load time: <500ms
+- Scroll performance: 60fps
+- Touch response: <100ms
+
+**Mobile Specific:**
+- iOS smooth scrolling enabled
+- Hardware acceleration for animations
+- Optimized image loading
+- Wake Lock for cooking mode
+
+### Optimization Techniques
+
+**Frontend:**
+- Minimal external dependencies
+- Inline critical CSS
+- Lazy loading for images (future)
+- Local storage caching (future)
+
+**Backend:**
+- Function warm starts (<100ms)
+- Dropbox response caching (15min)
+- Minimal function size
+- Efficient data serialization
 
 ---
 
 ## Security
 
-### Public Guest Responses
-- **No Authentication Required:** Guests respond via URL links
-- **Rationale:** Reduce friction for casual event RSVPs
-- **Data Exposure:** Guest email visible in URL (acceptable for this use case)
-- **Mitigation:** Unique event IDs prevent guessing other events
+### Data Access
+- **Public:** Recipe viewing, event responses
+- **No Authentication:** Contributor management (public)
+- **Backend Only:** Verification codes (v3.1, UI pending)
 
 ### API Security
-- **CORS:** Open for public guest responses
-- **Rate Limiting:** Netlify default limits (future: implement custom)
-- **Input Validation:** Server-side validation of all inputs
-- **SQL Injection:** Not applicable (using JSON storage, not SQL)
-- **XSS Prevention:** HTML escaping in email generation
+- CORS enabled for Netlify domains
+- API keys in environment variables
+- Dropbox OAuth with auto-refresh
+- Rate limiting via Netlify
 
-### Data Storage
-- **Dropbox:** Private app folder, not accessible publicly
-- **OAuth:** Refresh tokens stored securely in Netlify environment
-- **recipes.json:** Bundled with functions (not user-generated content)
-- **PII:** Guest emails stored but not exposed publicly
-
-### Future Security Enhancements
-1. **Rate Limiting:** Implement per-IP rate limits
-2. **Event Passwords:** Optional password for private events
-3. **CAPTCHA:** Prevent spam submissions
-4. **Admin Authentication:** Protect event creation/editing
-5. **Audit Logging:** Track all modifications
+### Data Privacy
+- No user tracking
+- No analytics
+- No cookies (except wake lock)
+- Guest emails stored in Dropbox only
 
 ---
 
-## Performance
+## Future Enhancements
 
-### Metrics
-- **Page Load:** < 2 seconds (static HTML)
-- **API Response:** < 200ms for get-recipe
-- **API Response:** < 500ms for get-recipes (122 recipes)
-- **Recipe Loading:** Dual strategy ensures < 1 second total
-- **Email Generation:** < 1 second (server-side)
+### v4.1 - Enhanced Cooking Mode
+- Three-mode architecture
+- Step-by-step navigation
+- Embedded ingredients per step
+- Progress indicators
+- Swipe gestures
 
-### Optimization Strategies
-1. **Static HTML:** No build step, instant page loads
-2. **Bundled recipes.json:** Faster than Dropbox API calls
-3. **Dual Loading:** Fallback ensures reliability
-4. **No Images in Bundle:** Reduces function size
-5. **Minimal CSS/JS:** Pure vanilla, no frameworks
+### v4.2 - Timer Integration
+- Web-based timers
+- Notification API
+- Audio alerts
+- Haptic feedback
+- Multiple concurrent timers
 
-### Future Performance Improvements
-1. **CDN Caching:** Cache recipe data for 1 hour
-2. **Image Optimization:** Compress and lazy-load images
-3. **Code Splitting:** Load JS modules on demand
-4. **Service Worker:** Offline recipe viewing
-5. **IndexedDB:** Client-side recipe caching
+### v4.3 - Desktop Polish
+- Two-column layout
+- Sticky ingredients sidebar
+- Generous typography
+- Enhanced print styles
 
----
-
-## Browser Compatibility
-
-### Supported Browsers
-- **Chrome/Edge:** 90+
-- **Firefox:** 88+
-- **Safari:** 14+
-- **Mobile Safari:** 14+
-- **Chrome Android:** 90+
-
-### Required Features
-- Fetch API
-- ES6+ JavaScript
-- CSS Grid
-- CSS Custom Properties
-- LocalStorage
+### v5.0 - Advanced Features (Future)
+- Voice control ("Hey Siri, next step")
+- Recipe photos
+- Meal planning
+- Grocery list generation
+- Social features (sharing, ratings)
+- Apple Watch companion app
 
 ---
 
-## Testing
+## Appendix
 
-### Manual Testing Checklist
-- [ ] Create event
-- [ ] Add recipes to event
-- [ ] Generate email
-- [ ] Click recipe link (guest view)
-- [ ] Submit preference
-- [ ] Submit will_bring
-- [ ] Submit dietary restriction
-- [ ] Volunteer for category
-- [ ] View response summary
-- [ ] Verify data in Dropbox
+### Browser Support
 
-### API Testing
-```bash
-# Test get-recipe
-curl https://fergi-cooking.netlify.app/.netlify/functions/get-recipe/8
+**Desktop:**
+- Chrome 90+ ✅
+- Firefox 88+ ✅
+- Safari 14+ ✅
+- Edge 90+ ✅
 
-# Test get-recipes
-curl https://fergi-cooking.netlify.app/.netlify/functions/get-recipes
+**Mobile:**
+- Safari iOS 14+ ✅ (Primary)
+- Chrome iOS 90+ ✅
+- Chrome Android 90+ ✅
 
-# Test get-events
-curl https://fergi-cooking.netlify.app/.netlify/functions/get-events
-```
+### Known Limitations
 
-### Browser Console Testing
-```javascript
-// Test recipe loading
-fetch('/.netlify/functions/get-recipe/8')
-  .then(r => r.json())
-  .then(console.log);
+- No offline support (requires network)
+- No user authentication (public access)
+- No recipe photos (text only)
+- No nutritional calculation
+- No recipe scaling
+- No print-to-PDF
 
-// Test guest selection
-fetch('/.netlify/functions/record-selection', {
-  method: 'POST',
-  body: JSON.stringify({
-    event_id: 'evt_123',
-    guest_email: 'test@example.com',
-    selection_type: 'prefer',
-    recipe_id: 8
-  })
-}).then(r => r.json()).then(console.log);
-```
+### Support & Maintenance
+
+**Issue Tracking:** GitHub Issues
+**Documentation:** CLAUDE.md, session summaries
+**Updates:** As needed, no fixed schedule
+**Backup:** Automatic via Dropbox, manual on demand
 
 ---
 
-## Monitoring & Debugging
-
-### Console Logging
-Detailed emoji-based logging for recipe loading:
-- 🔍 Loading recipe details
-- 📡 Trying API endpoint
-- ✅ Success
-- ❌ Failed
-- 🔄 Fallback strategy
-- 💥 Critical error
-
-### Netlify Logs
-- **Function Logs:** https://app.netlify.com/projects/fergi-cooking/logs/functions
-- **Deploy Logs:** https://app.netlify.com/projects/fergi-cooking/deploys
-- **Real-time:** Available during function execution
-
-### Error Tracking
-- Browser console for client-side errors
-- Netlify function logs for server-side errors
-- Manual error reports from users (future: integrate Sentry)
-
----
-
-## Maintenance
-
-### Regular Tasks
-1. **Monitor Dropbox OAuth:** Refresh tokens valid (monthly check)
-2. **Review Function Logs:** Check for errors (weekly)
-3. **Update recipes.json:** Add new recipes as needed
-4. **Test Critical Paths:** Guest response flow (before big events)
-5. **Review Guest Feedback:** Improve UX based on comments
-
-### Database Maintenance
-```bash
-# Update recipes.json from recipes.db
-python3 export_to_json.py
-
-# Deploy updated recipes
-netlify deploy --prod --dir="." --message="Updated recipes"
-```
-
-### Backup Strategy
-- **Dropbox:** Automatic versioning (30-day history)
-- **Git:** All code in GitHub repository
-- **recipes.json:** Bundled with functions (deployed copies)
-- **Local:** recipes.db maintained locally
-
----
-
-## Future Roadmap
-
-### Phase 1: Core Enhancements
-- [ ] Auto-send emails (SendGrid integration)
-- [ ] Recipe image uploads
-- [ ] Recipe variants (vegetarian, gluten-free)
-- [ ] Serving size calculator
-
-### Phase 2: Advanced Features
-- [ ] Host dashboard with real-time RSVP tracking
-- [ ] Grocery list generator from event menu
-- [ ] Recipe scaling (adjust servings)
-- [ ] Cooking timers and reminders
-
-### Phase 3: Social Features
-- [ ] Share recipes with friends
-- [ ] Recipe comments and ratings
-- [ ] Photo uploads from guests
-- [ ] Recipe remix/variations
-
-### Phase 4: Intelligence
-- [ ] AI-powered recipe suggestions
-- [ ] Dietary restriction compliance checking
-- [ ] Automatic course pairing
-- [ ] Menu balance analysis
-
----
-
-## Support & Documentation
-
-### Documentation Files
-- **COOKING_SPECIFICATION.md** - This file
-- **COOKING_HISTORY.md** - Development timeline
-- **DEPLOYMENT.md** - Deployment guide
-- **SESSION_SUMMARY_*.md** - Session documentation
-- **CLAUDE.md** - Project overview for Claude Code
-
-### Contact
-- **Developer:** Claude Code (Anthropic AI)
-- **Owner:** Joe Ferguson
-- **GitHub:** @fergidotcom
-- **Project:** https://github.com/fergidotcom/fergi-cooking
-
----
-
-**Document Version:** 1.0
-**System Version:** v2.8.1
-**Last Updated:** November 3, 2025
-**Status:** Production Ready ✓
+**Technical Specification**
+**Version:** v4.0.0
+**Last Updated:** November 4, 2025
+**Status:** ✅ Production Ready
+**Maintained By:** Fergi (Joe Ferguson)
+**AI Assistant:** Claude Code (Anthropic)

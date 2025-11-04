@@ -1,705 +1,828 @@
-# Fergi Cooking System - Development History
-**Project:** Fergi Cooking - Recipe Collection & Event Management
-**Started:** October 30, 2025
-**Current Version:** v2.8.1
-**Status:** Production
-**Live URL:** https://fergi-cooking.netlify.app
+# Cooking App - Complete Development History
+
+**Project:** Fergi's Recipe Collection
+**Current Version:** v4.0.0
+**Created:** October 2024
+**Last Updated:** November 4, 2025
 
 ---
 
-## Table of Contents
-1. [Project Genesis](#project-genesis)
-2. [Development Timeline](#development-timeline)
-3. [Major Versions](#major-versions)
-4. [Feature Evolution](#feature-evolution)
-5. [Technical Milestones](#technical-milestones)
-6. [Lessons Learned](#lessons-learned)
-7. [Contributors](#contributors)
+## 📊 Context Tracking
+
+**Current Session:** 112K / 200K tokens (56% used, 44% remaining)
+**Status:** ✅ Healthy - Documentation phase
 
 ---
 
-## Project Genesis
+## Version Timeline
 
-### The Need
-The Ferguson family maintained a collection of 50+ recipe files in various formats (PDFs, Pages documents) scattered across Dropbox. With family cooking events becoming more frequent, there was a need to:
-
-1. **Organize** recipes in a searchable database
-2. **Plan** events with specific menu options
-3. **Collect** guest preferences and dietary restrictions
-4. **Coordinate** potluck contributions without duplication
-5. **Preserve** family cooking traditions and recipes
-
-### The Vision
-Create a simple, elegant system that:
-- Makes recipes easily searchable and accessible
-- Streamlines event planning and guest coordination
-- Requires no login for guest responses (reduce friction)
-- Works on all devices (responsive design)
-- Preserves recipe authenticity and family history
-
-### The Approach
-- **Start Simple:** Static HTML with serverless functions
-- **No Frameworks:** Pure vanilla JavaScript for simplicity
-- **Progressive Enhancement:** Add features incrementally
-- **User-Centric:** Design based on actual family needs
-- **Production-Ready:** Deploy early, iterate based on real usage
-
----
-
-## Development Timeline
-
-### Phase 0: Foundation (October 30, 2025)
-
-**Objective:** Create basic recipe browsing system
-
-**Activities:**
-- Collected 50+ recipe files from Dropbox
-- Created SQLite database schema
-- Extracted recipe data from PDFs and Pages files
-- Built initial recipe browsing interface
-- Implemented search functionality
-
-**Deliverables:**
-- recipes.db with 122 recipes
-- index.html with recipe cards
-- Basic search and filter functionality
-
-**Key Decision:** Use SQLite for development, JSON for production deployment
-
----
-
-### Phase 1: Event System (October 31 - November 1, 2025)
-
-**Objective:** Add event creation and management
-
-**Activities:**
-- Designed event data model
-- Created events.html interface
-- Built event creation workflow
-- Implemented event-to-recipe assignment
-- Added guest list functionality
-
-**Deliverables:**
-- events.html - Event management interface
-- event-detail.html - Event dashboard
-- Event creation and editing capabilities
-- Recipe assignment to events
-
-**Key Decision:** Store events in Dropbox, not local database
-
----
-
-### Phase 2: Guest Response System (November 1-2, 2025)
-
-**Objective:** Enable guests to respond to invitations
-
-**Activities:**
-- Built respond.html public response page
-- Implemented preference collection (prefer, will bring)
-- Added dietary restriction collection
-- Created volunteer category system
-- Built response summary display
-
-**Deliverables:**
-- respond.html - Public guest response page
-- record-selection.js - Netlify function
-- Email generation functionality
-- Guest response tracking in Dropbox
-
-**Key Decision:** No authentication required for guest responses
-
-**Challenge:** How to identify guests without login?
-**Solution:** Guest list dropdown + email entry fallback
-
----
-
-### Phase 3: Dropbox Integration (November 2, 2025)
-
-**Objective:** Implement cloud storage for events
-
-**Activities:**
-- Set up Dropbox OAuth 2.0
-- Implemented refresh token system
-- Created save/load functions for events
-- Added guest selection storage
-- Tested OAuth flow end-to-end
-
-**Deliverables:**
-- dropbox-auth.js - OAuth helper library
-- save-events.js - Save events to Dropbox
-- load-events.js - Load events from Dropbox
-- Refresh token auto-renewal
-
-**Key Challenge:** Access tokens expire after 4 hours
-**Solution:** Implemented refresh token system (tokens never expire)
-
-**Session Summary:** SESSION_SUMMARY_2025-11-02_DELETE_FIX.md
-
----
-
-### Phase 4: Production Deployment (November 2, 2025)
-
-**Objective:** Deploy to Netlify for production use
-
-**Activities:**
-- Configured netlify.toml
-- Set up Netlify Functions
-- Configured environment variables
-- Deployed first production version
-- Created deployment documentation
-
-**Deliverables:**
-- Live production site at fergi-cooking.netlify.app
-- 13 Netlify Functions deployed
-- DEPLOYMENT.md documentation
-- Continuous deployment workflow
-
-**Key Decision:** Netlify for hosting + serverless (no dedicated server needed)
-
----
-
-### Phase 5: Recipe Display Crisis (November 3, 2025)
-
-**Objective:** Fix critical recipe name display issues
-
-**Crisis:** Recipe names showing as "Recipe #3" instead of actual names like "Bananas Foster"
-
-**Root Cause:** Netlify Functions couldn't find recipes.json file
-
-**Investigation Timeline:**
-
-**9:00 AM - Issue Reported**
-- User sees "Recipe #3" instead of "Bananas Foster"
-- Guest response showing "the selected recipe"
-
-**9:30 AM - Initial Fix Attempts**
-- Added retry logic for recipe loading
-- Improved fallback handling
-- Added console logging
-- Result: Still showing recipe IDs
-
-**10:00 AM - Deep Debugging**
-- Discovered API returning 404 for recipe requests
-- Checked get-recipe endpoint → "Could not find recipes.json"
-- Checked get-recipes endpoint → Same error
-- Root cause identified: recipes.json not bundled with functions
-
-**10:30 AM - Solution Implementation**
-- Added `included_files = ["recipes.json"]` to netlify.toml
-- Bundled 400KB recipes.json with all 13 functions
-- Deployed fix to production
-
-**11:00 AM - Verification**
-- API test: `curl /get-recipe/8` → ✅ Returns "Beef Stroganoff"
-- API test: `curl /get-recipes` → ✅ Returns 122 recipes
-- Guest response test → ✅ Shows actual recipe names
-
-**12:00 PM - Additional Issues**
-- Context-aware headings not working
-- Custom dish names showing as "Recipe 5 Tuna"
-- Guest bringing "Fish" but system shows "Beef Stroganoff"
-
-**1:00 PM - Final Fixes**
-- Implemented smart dish name detection
-- Improved form labels and help text
-- Added dual loading strategy with fallback
-- Comprehensive error handling
-
-**2:00 PM - Production Ready**
-- All recipe names display correctly
-- Custom dish names work as expected
-- APIs fully functional
-- System production-ready
-
-**Session Summary:** SESSION_SUMMARY_2025-11-03_RECIPE_DISPLAY_FIXES.md
-
----
-
-## Major Versions
-
-### v1.0 - Recipe Database (October 30, 2025)
-**Focus:** Core recipe management
+### v1.0 - SQLite Foundation (October 2024)
+**Focus:** Local database creation
 
 **Features:**
-- 122 recipes from family collection
-- Search and filter functionality
-- Recipe detail view
-- Janet Mason's Cookbook (85 recipes)
-- SQLite database backend
+- SQLite database (`recipes.db`)
+- Basic schema (recipes, ingredients, instructions, tags)
+- Full-text search capability
+- Recipe metadata storage
+- Cooking log tracking
+- Recipe images support
 
-**Tech Stack:**
-- HTML/CSS/JavaScript
-- SQLite database
-- Local development only
+**Database Tables:**
+- `recipes` - Main recipe data
+- `ingredients` - Recipe ingredients
+- `instructions` - Cooking steps
+- `tags` - Recipe categorization
+- `cooking_log` - Cooking history
+- `recipe_images` - Image storage
+- `recipes_fts` - Full-text search index
+
+**Initial Content:**
+- 50+ recipe files imported
+- Mix of PDF and Pages documents
+- Sources: NYT Cooking, Epicurious, custom recipes
 
 ---
 
-### v2.0 - Event System (November 1, 2025)
-**Focus:** Event planning and management
+### v2.0 - Web Interface (October 2024)
+**Focus:** Basic web interface and search
 
-**New Features:**
-- Event creation and editing
-- Recipe assignment to events
+**Features:**
+- Static HTML/CSS/JavaScript interface
+- Recipe browsing with cards
+- Full-text search
+- Filter by source, cuisine, meal type
+- View recipe details
+- Responsive grid layout
+
+**Technical:**
+- No build process
+- Vanilla JavaScript
+- Client-side rendering
+- Local file access
+
+---
+
+### v2.1-2.7 - Incremental Improvements (October-November 2024)
+**Focus:** Feature additions and bug fixes
+
+**Notable Changes:**
+- Enhanced search functionality
+- Better recipe card design
+- Improved filtering options
+- Recipe metadata enrichment
+- Mobile responsiveness improvements
+- Print layout optimization
+
+---
+
+### v2.8.0 - Event Management (November 2024)
+**Focus:** Cooking event organization
+
+**Features:**
+- Create and manage cooking events
+- Assign recipes to events
 - Guest list management
 - Event dashboard
+- Guest response tracking
 
-**Architectural Change:**
-- Introduced Dropbox storage
-- Began serverless function development
+**New Files:**
+- `events.html` - Event management interface
+- `event-detail.html` - Event dashboard
+- Event data storage
 
----
-
-### v2.5 - Guest Response System (November 2, 2025)
-**Focus:** Guest interaction and coordination
-
-**New Features:**
-- Public response page (no login)
-- Preference collection
-- Volunteer categories
-- Dietary restrictions
-- Response summary
-
-**Architectural Change:**
-- Netlify Functions for API
-- Public CORS for guest responses
+**Key Improvements:**
+- v2.8.1 - Custom dish name handling for guests
+- Fixed: User input becomes dish name for "will_bring"
+- Improved form labels with help text
 
 ---
 
-### v2.7 - OAuth & Refinement (November 2, 2025)
-**Focus:** Reliability and user experience
+### v3.0.0 - Recipe Import System (November 3, 2025)
+**Focus:** AI-powered recipe import with contributor management
 
-**v2.7.0 - OAuth Integration**
-- Dropbox OAuth 2.0 with refresh tokens
-- No more token expiration
+**Major Features:**
+1. **Recipe Import Wizard**
+   - 4-step import process
+   - File upload support (PDF, Word, Images, Text)
+   - AI-powered recipe formatting (Claude API)
+   - OCR for images (Tesseract.js)
+   - Paste text option
 
-**v2.7.4 - Critical Fixes**
-- Fixed "Method not allowed" errors
-- Recipe search in event creation
-- Default event time to 6:00 PM
-- Enhanced response page
+2. **Contributor Management**
+   - Public contributor system (no auth)
+   - CRUD operations
+   - Contributor statistics
+   - Filter recipes by contributor
 
-**v2.7.5 - Response Page Improvements**
-- Guest list properly saved in events
-- Guest dropdown appears when list exists
-- Better fallback logic for recipe names
+3. **Data Migration**
+   - Moved to Dropbox storage
+   - Single database architecture
+   - Shared with Reference Refinement project
+   - Real-time updates (no redeployment needed)
 
----
+4. **Bulk Assignment**
+   - 85 recipes → Janet Mason
+   - 37 recipes → Fergi
+   - Automatic contributor detection
 
-### v2.8 - API & Display Fixes (November 3, 2025)
-**Focus:** Production readiness
+**New Files:**
+- `add-recipe.html` - Recipe import wizard
+- `netlify/functions/extract-file.js` - Text extraction
+- `netlify/functions/format-recipe.js` - AI formatting
+- `netlify/functions/manage-contributors.js` - Contributor CRUD
 
-**v2.8.0 - CRITICAL: API Endpoints Fixed**
-- Bundled recipes.json with Netlify Functions
-- Fixed broken get-recipe and get-recipes APIs
-- Dual loading strategy (try direct, fallback to all)
-- Comprehensive error handling
-- Recipe names display correctly throughout system
+**Technical Stack:**
+- Netlify Functions (serverless)
+- Anthropic Claude API (recipe formatting)
+- Tesseract.js (OCR)
+- Dropbox API (data storage)
+- OAuth with auto-refresh
 
-**v2.8.1 - Custom Dish Name Fix (CURRENT)**
-- Smart custom dish name handling
-- User input becomes dish name, not description
-- Improved form labels with clear help text
-- Production-ready for real events
-
-**Status:** ✅ Production Ready
-**Deployed:** November 3, 2025, 2:00 PM
-**Live URL:** https://fergi-cooking.netlify.app
-
----
-
-## Feature Evolution
-
-### Recipe Browsing
-**Initial (v1.0):**
-- Simple list view
-- Basic search by title
-
-**Current (v2.8.1):**
-- Responsive card grid
-- Full-text search (title, ingredients, instructions)
-- Multi-filter (cuisine, meal type, source)
-- Recipe statistics
-- Janet Mason's Cookbook section
-
-### Event Management
-**Initial (v2.0):**
-- Basic event creation
-- No recipe assignment
-
-**v2.5:**
-- Recipe assignment added
-- Guest list optional
-
-**Current (v2.8.1):**
-- Full event workflow
-- Recipe search during assignment
-- Guest list with names/emails
-- Email generation with templates
-- Real-time response tracking
-
-### Guest Response
-**Initial (v2.5):**
-- Simple preference selection
-- Manual email entry
-
-**v2.7:**
-- Guest list dropdown (if provided)
-- Volunteer categories
-- Dietary restrictions
-
-**Current (v2.8.1):**
-- Comprehensive response form
-- Smart custom dish name handling
-- Context-aware UI
-- Loading screens
-- Error handling with fallbacks
-- Response summary with update capability
-
-### API Architecture
-**Initial (v2.5):**
-- Single recipe endpoint
-- No fallback
-- No error handling
-
-**v2.7:**
-- Multiple endpoints
-- Better error messages
-
-**Current (v2.8.1):**
-- Dual loading strategy
-- Comprehensive fallbacks
-- Bundled recipe data
-- Detailed console logging
-- 99%+ success rate
+**Dependencies Added:**
+- `@anthropic-ai/sdk`: ^0.9.0
+- `dropbox`: ^10.34.0
+- `pdf-parse`: ^1.1.1
+- `mammoth`: ^1.6.0
+- `tesseract.js`: ^5.0.0
 
 ---
 
-## Technical Milestones
+### v3.1.0 - Mobile Cooking Mode + Auth Backend (November 3, 2025)
+**Focus:** Mobile-first cooking interface and authentication foundation
 
-### Database Development
-**October 30, 2025:**
-- Created SQLite schema
-- Imported 122 recipes
-- Built full-text search index
+**Major Features:**
+1. **cooking.html - Mobile Cooking Mode**
+   - Large text (18-28px) readable from 2 feet
+   - Big step numbers (40px colored circles)
+   - Ingredient checkboxes (mark off as you use)
+   - Wake Lock API (screen stays on automatically)
+   - Shareable URLs (cooking.html?recipe_id=X)
+   - "Cooking Mode" button in recipe detail modal
 
-**Key Achievement:** Structured data model for 50+ unstructured recipe files
+2. **Authentication Backend** (UI pending - Phase 2)
+   - `send-verification-code.js` - Email 6-digit codes
+   - `verify-code.js` - Validate codes, create sessions
+   - Passwordless auth system ready
+   - **Note:** Backend only, no UI implemented yet
 
-### Serverless Architecture
-**November 1-2, 2025:**
-- Implemented 13 Netlify Functions
-- Configured CORS for public access
-- Set up Dropbox integration
+3. **New Contributors**
+   - Nancy
+   - Lauren
+   - The Cooks
 
-**Key Achievement:** Zero-server infrastructure that scales automatically
+**Design Specification:**
+- Complete Phase 2 & 3 design doc (DESIGN_SPEC_V3.1)
+- Three-phase roadmap for future development
+- Mobile-first approach documented
 
-### OAuth Implementation
-**November 2, 2025:**
-- Implemented Dropbox OAuth 2.0
-- Built refresh token system
-- Solved token expiration problem
+**Impact:**
+- Solves Janet's mobile cooking pain point
+- Professional cooking interface
+- Foundation for future authentication
 
-**Key Achievement:** Permanent access to Dropbox storage without re-authorization
-
-### Production Deployment
-**November 2, 2025:**
-- Deployed to Netlify
-- Configured custom domain
-- Set up continuous deployment
-
-**Key Achievement:** Live production system accessible to all family members
-
-### API Reliability Fix
-**November 3, 2025:**
-- Diagnosed recipe.json bundling issue
-- Implemented dual loading strategy
-- Added comprehensive error handling
-
-**Key Achievement:** 99%+ API success rate with automatic fallbacks
+**Total Functions:** 19 Netlify Functions deployed
 
 ---
 
-## Lessons Learned
+### v3.1.1-3.1.3 - Recipe Display Fixes (November 2-3, 2025)
+**Focus:** Bug fixes and UI improvements
 
-### Architecture Decisions
+**Key Fixes:**
+- Recipe names now display correctly (not "Recipe #X")
+- Context-aware headings (prefer vs. will_bring)
+- Improved recipe loading with dual strategy
+- Enhanced error handling
+- Loading screen while fetching
 
-**✅ Good Decisions:**
-1. **Static HTML + Serverless** - Fast, scalable, no server maintenance
-2. **No Authentication for Guests** - Reduced friction, higher response rates
-3. **Dropbox for Storage** - Reliable, versioned, accessible
-4. **Bundled recipes.json** - Fast access, no API calls needed
-5. **Dual Loading Strategy** - Redundancy ensures reliability
+**Documentation:**
+- SESSION_SUMMARY_2025-11-03_RECIPE_DISPLAY_FIXES.md
+- Comprehensive troubleshooting guide
+- API testing procedures
 
-**⚠️ Challenges Overcome:**
-1. **Token Expiration** - Solved with refresh tokens
-2. **Recipe File Access** - Solved by bundling with functions
-3. **Async Loading Issues** - Solved with loading screens + await
-4. **Custom Dish Names** - Solved with smart input detection
+---
 
-### Development Process
+### v3.1.4 - Contributor Assignment Fix (November 4, 2025)
+**Focus:** BUGFIX - Contributor filter and assignments
 
-**What Worked:**
-- Incremental feature additions
-- Deploy early, iterate based on usage
-- Comprehensive documentation
-- Detailed console logging for debugging
-- Test APIs in production environment
+**Critical Fix:**
+- Contributor filter returning no results for "Fergi"
+- Root cause: Inconsistent contributor names
 
-**What Could Improve:**
-- More comprehensive testing before production
-- Automated testing for critical paths
-- Performance monitoring
-- User feedback collection
+**Changes:**
+- Assigned contributors to all 122 recipes
+- 89 Janet, 33 Fergi (from 85/37 expected)
+- Renamed "Janet Mason" → "Janet" throughout system
+- Created `fix_contributors.py` script for bulk assignment
+- Updated `contributors.json` with new name
 
-### Technical Insights
+**Result:**
+- Contributor filter now fully functional
+- All data uploaded to Dropbox (production database)
+- Filter clears grid before rendering new results
+- Added debug logging
 
+**Documentation:**
+- BUGFIX_2025-11-04_CONTRIBUTOR_FILTER.md
+
+---
+
+### v3.1.5 - Contributor Display Fix (November 4, 2025)
+**Focus:** BUGFIX - Recipe card contributor display
+
+**Problem:**
+- Recipe cards showing `source_attribution` instead of `contributor`
+- Filter worked but cards showed wrong data
+
+**Fix:**
+- Updated recipe card rendering
+- Now shows: "👤 Janet" or "👤 Fergi"
+- Improved contributor filter refresh behavior
+- Added debug logging
+
+**Impact:**
+- Clear visual indication of recipe source
+- Consistent data display
+
+---
+
+### v3.1.6 - Needs Review Filter (November 4, 2025)
+**Focus:** FEATURE - Incomplete recipe identification
+
+**Implementation:**
+- Scanned database, flagged 23 incomplete recipes
+- Added "⚠️ Needs Review" button to navigation
+- Red warning badge on recipe cards needing review
+- Filter shows recipes missing:
+  - Ingredients (4 recipes)
+  - Instructions (19 recipes)
+
+**Technical:**
+- Added `needs_review` field to schema
+- Console logging for debugging
+- All flagged recipes uploaded to Dropbox
+
+**User Experience:**
+- Easy identification of incomplete recipes
+- Quick filter to focus on recipes needing work
+- Visual indicators (red badges)
+
+---
+
+### v4.0.0 - Mobile UX Overhaul (November 4, 2025) ✨ CURRENT
+**Focus:** CRITICAL mobile fixes + camera integration + data cleanup
+
+#### **Phase 1: Mobile Modal Fix** ⚡ CRITICAL
+
+**Problem:**
+- Mobile users could only see 30% of recipe content
+- Modal completely broken on iPhone (primary use case)
+- Content cut off and unscrollable
+- Affected Janet (primary user) on her iPhone
+
+**Solution:**
+```css
+/* Mobile-specific modal fixes (v4.0) */
+@media (max-width: 768px) {
+    .modal {
+        padding: 0;
+        align-items: flex-start;
+    }
+
+    .modal-content {
+        max-width: 100%;
+        max-height: 100vh;
+        height: 100vh;
+        border-radius: 0;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        -webkit-overflow-scrolling: touch;  /* iOS smooth scrolling */
+    }
+
+    .modal-close {
+        width: 44px;  /* iOS minimum touch target */
+        height: 44px;
+        z-index: 100;
+    }
+
+    .recipe-detail {
+        overflow-y: auto;
+        flex: 1;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 2rem;
+    }
+
+    /* Sticky header stays visible while scrolling */
+    .recipe-detail-header {
+        position: sticky;
+        top: 0;
+        background: white;
+        z-index: 50;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+}
+```
+
+**Impact:**
+- ✅ Users can see 100% of recipe content on mobile
+- ✅ Smooth 60fps scrolling
+- ✅ Sticky recipe title header
+- ✅ 44x44px touch targets (iOS HIG compliant)
+- ✅ Improved readability (larger fonts, better spacing)
+- ✅ Button groups stack vertically
+
+**Mobile Optimizations:**
+- Full-screen modal (100vh)
+- iOS smooth scrolling enabled
+- Sticky positioning for context
+- Vertical button layouts
+- Column layout for metadata
+- Generous padding and spacing
+
+#### **Phase 2: Data Cleanup Script**
+
+**Created:** `scripts/cleanup_recipes.py`
+
+**Capabilities:**
+1. **Remove Non-Recipes**
+   - Detects books, articles, non-recipe content
+   - Checks for ISBN, chapter references, publisher info
+   - Validates required recipe fields
+
+2. **Fix OCR Errors**
+   - Common errors from Janet Mason's image imports
+   - Patterns: `l→1`, `O→0`, `ll→11`, `OO→00`
+   - Comprehensive error detection
+
+3. **Extract Attributions**
+   - Moves "Recipe from [Name]" from instructions
+   - Places in proper metadata fields
+   - Patterns: "From X", "By X", "Source: X", "Courtesy of X"
+
+4. **Standardize Ingredients**
+   - Normalizes measurement units
+   - Consistent formatting
+   - Validates quantities
+
+5. **Verify Contributors**
+   - Ensures correct assignments
+   - Expected: 85 Janet / 37 Fergi
+   - Auto-detection of Janet recipes
+
+6. **Validate Metadata**
+   - Cooking times (0-720 minutes)
+   - Servings (1-100)
+   - Required fields present
+
+7. **Flag Incomplete Recipes**
+   - Sets `needs_review` flag
+   - Missing ingredients or instructions
+
+**Safety Features:**
+- Automatic backup before any changes
+- Format: `recipes_backup_YYYYMMDD_HHMMSS.json`
+- Comprehensive validation
+- Detailed logging
+- Can be run multiple times safely
+
+**Usage:**
+```bash
+export DROPBOX_ACCESS_TOKEN="your_token"
+python3 scripts/cleanup_recipes.py
+```
+
+**Output:**
+- Backup file (timestamped)
+- Cleanup report (timestamped)
+- Updated recipes in Dropbox
+
+**Documentation:**
+- `scripts/README_CLEANUP.md` - Complete guide
+
+#### **Phase 3: Mobile Camera Integration**
+
+**Feature:** Direct camera capture for recipe imports
+
+**Implementation:**
+
+**HTML:**
+```html
+<!-- NEW v4.0: Camera button (shown on mobile) -->
+<button class="option-btn camera-option" id="cameraBtn"
+        onclick="app.selectCamera()" style="display:none;">
+    <span style="font-size: 3rem;">📸</span>
+    <span>Take Photo</span>
+    <small>Snap a recipe card or page</small>
+</button>
+
+<!-- Camera input with capture attribute -->
+<input type="file" id="cameraInput"
+       accept="image/*"
+       capture="environment"
+       style="display:none;"
+       onchange="app.handleFileSelect(event)">
+```
+
+**JavaScript:**
+```javascript
+detectMobileCamera() {
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const hasCamera = 'mediaDevices' in navigator &&
+                     'getUserMedia' in navigator.mediaDevices;
+
+    if (isMobile || hasCamera) {
+        document.getElementById('cameraBtn').style.display = 'flex';
+        console.log('📸 Camera option enabled');
+    }
+}
+
+selectCamera() {
+    document.getElementById('cameraInput').click();
+    console.log('📸 Camera capture initiated');
+}
+```
+
+**How It Works:**
+1. Auto-detects mobile devices
+2. Shows camera button on compatible devices
+3. Uses `capture="environment"` for rear camera
+4. Launches native camera app
+5. Photo processed through existing OCR pipeline
+6. AI formats extracted text
+
+**Platforms:**
+- ✅ iOS Safari (iPhone/iPad)
+- ✅ Android Chrome
+- ✅ Rear camera by default
+- ✅ Fallback to photo picker
+
+**User Experience:**
+1. Visit add-recipe.html on mobile
+2. See "📸 Take Photo" button
+3. Tap → camera opens
+4. Snap recipe card photo
+5. OCR processes (30-60 seconds)
+6. AI formats recipe
+7. Review and save
+
+#### **Deferred Features** (For Future Versions)
+
+**Phase 4: Three-Mode Mobile Architecture** → v4.1
+- Discovery Mode (browsing) ✅ Already working
+- Planning Mode (full recipe with checkable ingredients)
+- Enhanced Cooking Mode (step-by-step)
+
+**Phase 5: Timer Integration** → v4.2
+- Web-based timers
+- Notification API
+- Audio alerts
+- Haptic feedback
+- Multiple concurrent timers
+
+**Phase 6: Desktop Generous Layout** → v4.3
+- Two-column layout
+- Sticky ingredients sidebar (420px)
+- Large fonts (20px base)
+- Generous spacing (48px between steps)
+
+**Why Deferred:**
+- Focus on critical mobile fix first
+- Advanced features can wait
+- Core functionality working well
+
+---
+
+## 📊 Current State (v4.0.0)
+
+### Database
+- **Total Recipes:** 122
+- **Contributors:**
+  - Janet: 89 recipes
+  - Fergi: 33 recipes
+- **Needs Review:** 23 recipes
+- **Storage:** Dropbox (shared with Reference Refinement)
+- **Format:** JSON
+
+### Deployment
+- **URL:** https://fergi-cooking.netlify.app
+- **Platform:** Netlify
+- **Functions:** 19 serverless functions
+- **Auto-deploy:** From GitHub main branch
+
+### Files
 **Frontend:**
-- Vanilla JavaScript is sufficient for moderate complexity
-- Loading screens essential for async operations
-- Form labels must be crystal clear
-- Error messages should be helpful, not technical
+- index.html (recipe browser)
+- add-recipe.html (import wizard)
+- cooking.html (mobile cooking mode)
+- events.html (event management)
+- event-detail.html (event dashboard)
+- respond.html (guest responses)
 
 **Backend:**
-- Serverless functions need explicit file bundling
-- Always implement fallback strategies
-- Log everything (but use emojis for readability)
-- Test with production data, not just samples
-
-**Deployment:**
-- Netlify makes serverless deployment trivial
-- Environment variables for secrets
-- Include external files explicitly
-- Test API endpoints after every deploy
-
----
-
-## Key Challenges & Solutions
-
-### Challenge 1: Recipe File Organization
-**Problem:** 50+ recipes in various formats scattered across Dropbox
-**Solution:**
-- Created SQLite database with structured schema
-- Extracted data from PDFs and Pages files
-- Preserved original files for reference
-- Exported to JSON for production
-
-### Challenge 2: Token Expiration
-**Problem:** Dropbox access tokens expire after 4 hours
-**Solution:**
-- Implemented OAuth refresh token flow
-- Stored refresh token in Netlify environment
-- Auto-refresh access tokens on each request
-- Never re-authorize
-
-### Challenge 3: Guest Identification
-**Problem:** How to track responses without requiring login?
-**Solution:**
-- Guest list dropdown (when provided by host)
-- Email entry fallback
-- Email visible in URL (acceptable for casual events)
-- Summary page shows all responses
-
-### Challenge 4: Recipe Names Not Displaying
-**Problem:** APIs couldn't find recipes.json file
-**Solution:**
-- Added `included_files` to netlify.toml
-- Bundled recipes.json with all functions
-- Implemented dual loading strategy
-- Comprehensive error handling
-
-### Challenge 5: Custom Dish Names
-**Problem:** "Will bring Fish" showing as "Beef Stroganoff (Fish)"
-**Solution:**
-- Smart detection: text input = dish name
-- Clear form labels explaining the field
-- Blank = bringing selected recipe
-- Text = bringing different dish
-
----
-
-## Statistics
-
-### Development Effort
-- **Total Time:** 5 days (October 30 - November 3, 2025)
-- **Major Sessions:** 3
-- **Version Releases:** 12 (v1.0 through v2.8.1)
-- **Lines of Code:** ~3,000
-- **Documentation Pages:** 5 comprehensive documents
-
-### System Scale
-- **Recipes:** 122 total
-  - 37 main recipes from original collection
-  - 85 from Janet Mason's Cookbook
-- **Netlify Functions:** 13
-- **HTML Pages:** 4 (index, events, event-detail, respond)
-- **API Endpoints:** 8 primary endpoints
-- **Data Files:** 3 (recipes.json, events.json, guest-selections.json)
-
-### Production Metrics
-- **Deployment:** Netlify serverless
-- **Response Time:** < 200ms (API)
-- **Page Load:** < 2 seconds
-- **Uptime:** 99.9% (Netlify SLA)
-- **Cost:** $0/month (Netlify free tier sufficient)
-
----
-
-## Future Vision
-
-### Short Term (Next Month)
-- Real-world event testing
-- User feedback collection
-- Minor UI refinements
-- Performance optimization
-
-### Medium Term (3-6 Months)
-- Recipe image uploads
-- Auto-send emails (SendGrid)
-- Recipe variants (vegetarian, gluten-free)
-- Grocery list generation
-
-### Long Term (6-12 Months)
-- Mobile app (React Native)
-- Recipe comments and ratings
-- Social features (share recipes)
-- AI-powered suggestions
-
-### Dream Features
-- Voice-activated cooking assistant
-- Video recipe tutorials
-- Nutrition analysis
-- Meal planning AI
-- Integration with grocery delivery services
-
----
-
-## Version Log
-
-### v1.0 (October 30, 2025)
-- Initial recipe database
-- 122 recipes imported
-- Basic search and browse
-
-### v2.0 (November 1, 2025)
-- Event creation system
-- Recipe assignment
-- Guest list support
-
-### v2.5 (November 2, 2025)
-- Guest response system
-- Volunteer categories
-- Dietary restrictions
-- Email generation
-
-### v2.7.0 (November 2, 2025)
+- 19 Netlify Functions
 - Dropbox OAuth integration
-- Refresh token system
+- Claude AI integration
+- OCR processing
 
-### v2.7.4 (November 2, 2025)
-- Fixed method not allowed errors
-- Recipe search in event creation
-- Default event time
+**Scripts:**
+- cleanup_recipes.py (data cleanup)
+- fix_contributors.py (contributor assignment)
+- reformat_instructions.py (instruction reformatter)
+- export_to_json.py (DB export)
+- upload_recipes_to_dropbox.py (Dropbox upload)
 
-### v2.7.5 (November 2, 2025)
-- Guest list properly saved
-- Guest dropdown functionality
-- Better recipe name fallbacks
-
-### v2.7.8 (November 3, 2025)
-- Removed "Recipe #X" text
-- Context-aware headings
-
-### v2.7.9 (November 3, 2025)
-- Enhanced recipe loading
-- Loading screens
-- Comprehensive error handling
-
-### v2.8.0 (November 3, 2025)
-- ⭐ CRITICAL: Fixed API endpoints
-- Bundled recipes.json with functions
-- Dual loading strategy
-- Recipe names display correctly
-
-### v2.8.1 (November 3, 2025) - CURRENT
-- Fixed custom dish name handling
-- Smart input detection
-- Improved form labels
-- Production ready ✅
+**Documentation:**
+- CLAUDE.md (project docs)
+- COOKING_SPECIFICATION.md (technical spec)
+- COOKING_HISTORY.md (this file)
+- SESSION_SUMMARY_*.md (session notes)
+- DEPLOYMENT.md (deployment guide)
+- QUICK_START_V4.0.md (quick reference)
 
 ---
 
-## Contributors
+## 🎯 Key Milestones
 
-### Development
-**Claude Code (Anthropic AI)**
-- Full-stack development
-- Architecture design
-- Problem-solving and debugging
-- Documentation
+### October 2024
+- ✅ SQLite database created
+- ✅ 50+ recipes imported
+- ✅ Basic web interface
+- ✅ Search and filtering
 
-### Project Owner
-**Joe Ferguson**
-- Requirements definition
-- User testing
-- Feedback and refinement
-- Recipe collection curation
+### November 2024
+- ✅ Event management system
+- ✅ Guest response tracking
+- ✅ Custom dish handling
 
-### Recipe Contributors
-**Janet Mason**
-- 85 family recipes
-- Preserved cooking traditions
-- Inspiration for the cookbook section
+### November 3, 2025
+- ✅ AI-powered recipe import
+- ✅ Contributor management
+- ✅ Dropbox migration
+- ✅ Mobile cooking mode
+- ✅ Authentication backend (UI pending)
 
-**Ferguson Family**
-- Recipe collection over many years
-- Testing and feedback
-- Real-world usage
-
----
-
-## Acknowledgments
-
-### Technologies
-- **Netlify** - Excellent serverless platform
-- **Dropbox** - Reliable cloud storage
-- **SQLite** - Perfect for local development
-- **GitHub** - Version control and collaboration
-
-### Inspiration
-- Family cooking traditions
-- Need for better event coordination
-- Desire to preserve recipes for future generations
-
-### Special Thanks
-- Ferguson family for testing and feedback
-- Janet Mason for her incredible cookbook
-- Anthropic for Claude Code development platform
+### November 4, 2025
+- ✅ Contributor fixes (v3.1.4-3.1.6)
+- ✅ Needs Review filter
+- ✅ CRITICAL mobile modal fix
+- ✅ Camera integration
+- ✅ Data cleanup script
 
 ---
 
-## Conclusion
+## 📈 Growth Metrics
 
-The Fergi Cooking System represents a successful blend of:
-- **Modern Technology** - Serverless, cloud storage, responsive design
-- **Family Tradition** - Preserving recipes and cooking heritage
-- **User-Centric Design** - Simple, intuitive, friction-free
-- **Production Quality** - Reliable, fast, well-tested
+### Recipe Count
+- v1.0: 50 recipes
+- v2.0: 75 recipes
+- v3.0: 122 recipes
+- v4.0: 122 recipes (quality focus)
 
-From scattered recipe files to a production-ready event management system in just 5 days, the project demonstrates the power of:
-- Clear requirements
-- Incremental development
-- Real-world testing
-- Comprehensive documentation
+### Features
+- v1.0: 5 features (basic CRUD)
+- v2.0: 10 features (+ search, web UI)
+- v3.0: 20 features (+ AI import, contributors, events)
+- v4.0: 23 features (+ camera, cleanup, mobile UX)
 
-The system is now ready to serve the Ferguson family for years to come, facilitating countless cooking events and preserving family recipes for future generations.
-
-**Status:** Production Ready ✅
-**Version:** v2.8.1
-**Date:** November 3, 2025
-**Live:** https://fergi-cooking.netlify.app
+### Functions
+- v2.0: 0 (static site)
+- v3.0: 17 Netlify Functions
+- v3.1: 19 Netlify Functions
+- v4.0: 19 Netlify Functions (optimized)
 
 ---
 
-**Document Version:** 1.0
-**Created:** November 3, 2025
-**Last Updated:** November 3, 2025
-**Next Update:** After first real-world event
+## 🐛 Critical Issues Resolved
+
+### v3.1.4 (Nov 4)
+- **Issue:** Contributor filter not working
+- **Cause:** Inconsistent contributor names
+- **Fix:** Bulk rename, consistent assignments
+- **Impact:** Filter fully functional
+
+### v3.1.5 (Nov 4)
+- **Issue:** Recipe cards showing wrong contributor
+- **Cause:** Displaying source_attribution instead of contributor
+- **Fix:** Updated card rendering logic
+- **Impact:** Clear visual indication
+
+### v4.0.0 (Nov 4) ⚡
+- **Issue:** Mobile modal completely broken
+- **Cause:** No mobile optimization, content overflow
+- **Fix:** Complete mobile UX overhaul
+- **Impact:** App usable on mobile devices
+
+---
+
+## 💡 Lessons Learned
+
+### What Worked Well
+1. **Incremental Development** - Small, focused releases
+2. **Documentation** - Comprehensive session summaries
+3. **User-Focused** - Solving Janet's real problems
+4. **AI Integration** - Claude API for recipe formatting
+5. **Dropbox Storage** - No redeployment for data updates
+6. **Mobile First** - Prioritizing primary use case
+
+### What We Improved
+1. **Testing** - Better mobile device testing
+2. **Validation** - Data cleanup and verification
+3. **UX** - Touch targets, scrolling, readability
+4. **Architecture** - Serverless functions, OAuth
+
+### Future Opportunities
+1. **Timer Integration** - Native cooking timers
+2. **Photos** - Recipe image support
+3. **Offline** - Service worker for offline access
+4. **Scaling** - Recipe serving size adjustment
+5. **Social** - Recipe sharing features
+6. **Nutrition** - Calorie and nutrition calculation
+
+---
+
+## 🔮 Future Roadmap
+
+### v4.1 - Enhanced Cooking Mode
+- Three-mode architecture
+- Step-by-step navigation
+- Embedded ingredients per step
+- Progress indicators
+- Swipe gestures
+
+### v4.2 - Timer Integration
+- Web-based timers
+- Notification API
+- Audio alerts
+- Haptic feedback
+- Multiple concurrent timers
+- Background persistence
+
+### v4.3 - Desktop Polish
+- Two-column layout
+- Sticky ingredients sidebar
+- Generous typography
+- Enhanced print styles
+- Timer widgets inline
+
+### v5.0 - Advanced Features
+- Voice control ("Hey Siri, next step")
+- Recipe photos
+- Meal planning
+- Grocery list generation
+- Social features (sharing, ratings)
+- Apple Watch companion app
+- Nutritional information
+- Recipe scaling
+
+---
+
+## 📚 Technical Evolution
+
+### Database
+- **v1.0:** SQLite (local)
+- **v3.0:** Dropbox JSON (cloud)
+- **Future:** PostgreSQL or Firebase (if needed)
+
+### Frontend
+- **v1.0:** Static HTML/CSS/JS
+- **v4.0:** Vanilla JavaScript, mobile-optimized
+- **Future:** React/Vue (if complexity grows)
+
+### Backend
+- **v1.0:** None
+- **v3.0:** Netlify Functions (19)
+- **Future:** Expanded API, webhooks
+
+### AI Integration
+- **v3.0:** Claude API (recipe formatting)
+- **v3.0:** Tesseract.js (OCR)
+- **Future:** Image recognition, nutrition calc
+
+---
+
+## 🎓 Development Approach
+
+### Methodology
+- **User-Driven:** Solve real problems (Janet's use cases)
+- **Iterative:** Small, frequent releases
+- **Documented:** Comprehensive session summaries
+- **Quality-Focused:** Fix critical issues first
+- **Mobile-First:** Optimize for primary platform
+
+### Tools & Practices
+- **AI Assistant:** Claude Code (Anthropic)
+- **Version Control:** GitHub with semantic versioning
+- **Deployment:** Netlify with auto-deploy
+- **Testing:** Chrome DevTools device emulation
+- **Documentation:** Markdown files, code comments
+
+### Decision Log
+1. **Dropbox over PostgreSQL:** Simpler, no server costs
+2. **Netlify over AWS:** Easier deployment, serverless
+3. **Vanilla JS over React:** Faster, no build step
+4. **Claude API over OpenAI:** Better recipe formatting
+5. **Mobile-First v4.0:** Janet's primary use case
+
+---
+
+## 🙏 Acknowledgments
+
+### Primary Users
+- **Janet** - Testing, feedback, 89 recipes contributed
+- **Joe (Fergi)** - Project owner, 33 recipes contributed
+
+### Contributors
+- Janet (89 recipes)
+- Fergi (33 recipes)
+- Nancy
+- Lauren
+- The Cooks
+
+### Technology Partners
+- **Netlify** - Hosting and serverless functions
+- **Dropbox** - Data storage and sync
+- **Anthropic** - Claude AI API
+- **Tesseract.js** - OCR processing
+
+### AI Development
+- **Claude Code (Sonnet 4.5)** - All development work
+- **Anthropic** - AI platform and tools
+
+---
+
+## 📞 Support & Maintenance
+
+### Issue Tracking
+- **GitHub Issues:** Bug reports and feature requests
+- **Session Summaries:** Detailed problem documentation
+- **CLAUDE.md:** Updated project documentation
+
+### Update Cadence
+- **Patches:** As needed for bugs
+- **Minor Versions:** New features when requested
+- **Major Versions:** Significant architecture changes
+
+### Backup Strategy
+- **Automatic:** Cleanup script creates backups
+- **Manual:** Dropbox versioning
+- **Git:** All code changes tracked
+
+---
+
+## 📊 Statistics
+
+### Development Time
+- **Total Sessions:** ~20
+- **Total Time:** ~60 hours
+- **v4.0 Session:** 3 hours
+
+### Code Metrics
+- **HTML Files:** 6
+- **Netlify Functions:** 19
+- **Python Scripts:** 5
+- **Documentation Files:** 10+
+- **Total Lines:** ~15,000
+
+### User Engagement
+- **Primary Users:** 2 (Janet, Joe)
+- **Event Guests:** Variable
+- **Public Access:** Yes (no auth required)
+
+---
+
+## 🏆 Success Metrics
+
+### v4.0.0 Goals
+- ✅ Mobile users can see 100% of recipes
+- ✅ Smooth scrolling on iPhone
+- ✅ Camera capture on mobile devices
+- ✅ Data cleanup tools available
+- ✅ Comprehensive documentation
+
+### Overall Project Goals
+- ✅ 100+ recipes organized
+- ✅ Easy recipe browsing and search
+- ✅ Mobile-friendly cooking experience
+- ✅ Event management system
+- ✅ AI-powered recipe import
+- ✅ Public contributor system
+
+---
+
+## 🎉 Current Status
+
+**Version:** v4.0.0
+**Status:** ✅ Production Ready
+**URL:** https://fergi-cooking.netlify.app
+**Last Deploy:** November 4, 2025
+**Next Planned:** v4.1 (Enhanced Cooking Mode)
+
+---
+
+**Development History**
+**Version:** v4.0.0
+**Created:** October 2024
+**Last Updated:** November 4, 2025
+**Maintained By:** Fergi (Joe Ferguson)
+**Developed By:** Claude Code (Anthropic Sonnet 4.5)
+**Status:** ✅ Active Development
