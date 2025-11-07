@@ -109,3 +109,6 @@ add_calories.py
 quick_upload.py
 upload*.py
 reformat_instructions.py
+
+# EXCEPTION: Allow regeneration spec (needed for Web session)
+!RECIPE_DATABASE_REGENERATION_SPEC.md
