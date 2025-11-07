@@ -73,10 +73,12 @@ exports.handler = async (event, context) => {
     let recipes = recipesData;
 
     // Apply contributor filter if provided
+    // Note: Old database uses source_attribution, new will use contributor
     if (contributor) {
-      recipes = recipes.filter(recipe =>
-        recipe.contributor && recipe.contributor.toLowerCase() === contributor.toLowerCase()
-      );
+      recipes = recipes.filter(recipe => {
+        const recipeContributor = recipe.contributor || recipe.source_attribution;
+        return recipeContributor && recipeContributor.toLowerCase() === contributor.toLowerCase();
+      });
     }
 
     // Apply search filter if provided
@@ -111,7 +113,7 @@ exports.handler = async (event, context) => {
       cuisine_type: r.cuisine_type,
       meal_type: r.meal_type,
       source_attribution: r.source_attribution,
-      contributor: r.contributor,
+      contributor: r.contributor || r.source_attribution, // Fallback for old database
       rating: r.rating,
       favorite: r.favorite,
       prep_time_minutes: r.prep_time_minutes,
@@ -121,7 +123,8 @@ exports.handler = async (event, context) => {
       calories_per_serving: r.calories_per_serving,
       date_added: r.date_added,
       date_modified: r.date_modified,
-      tags: r.tags
+      tags: r.tags,
+      needs_review: r.needs_review // Include needs_review flag
     }));
 
     // Apply pagination
