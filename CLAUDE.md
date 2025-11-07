@@ -12,12 +12,27 @@ This file provides guidance to Claude Code (claude.ai/code) when working with th
 
 **Project Location:** `/Users/joeferguson/Library/CloudStorage/Dropbox/Fergi/Cooking`
 **Created:** October 30, 2025
-**Status:** ✓ Production - Deployed to Netlify (v3.1.6)
+**Status:** ✓ Production - Deployed to Netlify (v4.0.0)
 **Live URL:** https://fergi-cooking.netlify.app
 **Cooking Mode:** https://fergi-cooking.netlify.app/cooking.html?recipe_id=5
 **Purpose:** Organize and manage recipe collection, create searchable recipe database, document family recipes, manage cooking events with guest preferences, import recipes with AI formatting, manage contributors, mobile cooking mode for Janet
 
-## 🆕 Recent Updates - November 4, 2025
+## 🆕 Recent Updates - November 7, 2025
+
+**v4.0.0 - 🎉 MAJOR RELEASE: Mobile-First UI Redesign (Nov 7):**
+- ✅ Complete visual redesign using Ferguson Family Archive design system
+- ✅ New CSS design tokens: colors, spacing, typography, shadows, border radius
+- ✅ Mobile-first responsive layout with improved touch targets (44px minimum)
+- ✅ Enhanced modal system with full-screen mobile support and animations
+- ✅ Refined recipe cards with improved hover states and borders
+- ✅ Better form styling with focus states and transitions
+- ✅ Consistent button system with proper sizing and hover effects
+- ✅ Improved navigation with better spacing and mobile responsiveness
+- ✅ Updated all HTML files: index.html, events.html, event-detail.html, respond.html, add-recipe.html
+- ✅ Lightly updated cooking.html (colors/typography only - maintained kitchen UX)
+- ✅ Professional, polished appearance consistent with Ferguson Family Archive
+- ✅ All 19 Netlify Functions unchanged - full backward compatibility
+- ✅ All existing features preserved (recipe management, contributors, events, cooking mode)
 
 **v3.1.6 - FEATURE: Needs Review Filter (Nov 4):**
 - ✅ Scanned database and flagged 23 incomplete recipes
@@ -357,10 +372,10 @@ The recipe collection represents years of accumulated cooking knowledge and fami
 
 ---
 
-**Last Updated:** November 4, 2025
-**Version:** v3.1.6
+**Last Updated:** November 7, 2025
+**Version:** v4.0.0
 **Status:** ✓ Production - Live at https://fergi-cooking.netlify.app
-**Database:** 122 recipes (89 Janet, 33 Fergi, 23 need review) | **19 Netlify Functions** | **All APIs Working**
+**Database:** 122 recipes (89 Janet, 33 Fergi, 23 need review) | **19 Netlify Functions** | **All APIs Working** | **Mobile-First Design**
 
 **Core Features:**
 - Recipe browsing, search, and filtering
