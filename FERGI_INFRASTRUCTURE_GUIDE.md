@@ -1,1 +1,0 @@
-/Users/joeferguson/Library/CloudStorage/Dropbox/Fergi/FERGI_INFRASTRUCTURE_GUIDE.md
