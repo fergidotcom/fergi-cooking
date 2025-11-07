@@ -7,6 +7,97 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [4.0.0] - 2025-11-07
+
+### 🎉 MAJOR RELEASE - Mobile-First UI Redesign
+
+**Status:** ✅ Deployed to Production
+**Live URL:** https://fergi-cooking.netlify.app
+**Session:** SESSION_SUMMARY_2025-11-07_V4.0_UI_REDESIGN.md
+
+### Changed - Complete Visual Redesign
+
+#### Ferguson Family Archive Design System Integration
+- Integrated complete design system from Ferguson Family Archive project
+- New CSS design tokens system:
+  - **Colors:** Primary (#3b82f6), Success (#10b981), Warning (#f59e0b), Danger (#ef4444)
+  - **Spacing:** 8px base grid system (--space-xs through --space-2xl)
+  - **Typography:** Consistent font sizes (--font-xs through --font-4xl) and weights
+  - **Shadows:** Four-level shadow system (--shadow-sm through --shadow-xl)
+  - **Border Radius:** Consistent radius values (--radius-sm through --radius-full)
+- Legacy variable mappings for backward compatibility
+
+#### Mobile-First Responsive Improvements
+- Enhanced mobile-first responsive layout throughout
+- Improved touch targets: 44px minimum height on all interactive elements
+- Better spacing and gap management using design tokens
+- Full-screen modals on mobile devices with smooth animations
+- Sticky headers with proper z-index management
+- Responsive navigation that adapts to mobile, tablet, and desktop
+
+#### Component Refinements
+- **Recipe Cards:**
+  - Refined hover effects (transform + shadow-xl)
+  - Better border treatment with primary color on hover
+  - Improved card header gradients
+  - Better information hierarchy with updated typography
+
+- **Buttons:**
+  - Consistent sizing with min-height: 44px
+  - Smooth 0.2s transitions
+  - Proper hover states with lift effect (translateY(-2px))
+  - Updated color scheme matching design system
+
+- **Forms:**
+  - Enhanced focus states with ring effect (box-shadow)
+  - Better input padding and border radius
+  - Smooth transitions on interaction
+  - Improved label typography
+
+- **Modals:**
+  - Smooth fade-in and slide-up animations
+  - Better close button (44px, rounded, with rotate animation)
+  - Improved overlay darkness (rgba(0, 0, 0, 0.75))
+  - Full-screen on mobile with proper scrolling
+
+#### Updated Files
+- ✅ `index.html` - Complete CSS redesign with all design tokens
+- ✅ `events.html` - Updated with design system
+- ✅ `event-detail.html` - Updated with design system
+- ✅ `respond.html` - Updated with design system
+- ✅ `add-recipe.html` - Updated with design system
+- ✅ `cooking.html` - Lightly updated (colors/typography only, maintained kitchen UX)
+
+### Technical
+
+#### Backward Compatibility
+- All 19 Netlify Functions unchanged
+- No breaking changes to functionality
+- Legacy CSS variable mappings ensure compatibility
+- All existing features preserved:
+  - Recipe browsing, search, and filtering
+  - Contributor management
+  - Event management and guest responses
+  - Recipe import wizard
+  - Mobile cooking mode
+  - Dropbox synchronization
+
+#### Design Decisions
+- Mobile-first approach: base styles for mobile, enhanced for larger screens
+- Consistent 0.2s transition timing for all interactions
+- Primary color changed from dark blue-gray (#2c3e50) to modern blue (#3b82f6)
+- Success color changed from darker green to modern emerald (#10b981)
+- Warning/secondary unified to amber (#f59e0b)
+- Danger color standardized to red (#ef4444)
+
+### Notes
+- This is a major version bump (3.1.x → 4.0.0) due to significant visual changes
+- No functionality changes - purely a design system upgrade
+- Sets visual standard for future Fergi projects
+- Cooking mode intentionally left minimal (kitchen-optimized)
+
+---
+
 ## [3.1.0] - 2025-11-04
 
 ### 🎉 MAJOR FEATURE - Mobile Cooking Mode
