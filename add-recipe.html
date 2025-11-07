@@ -875,16 +875,31 @@ Bake for 25-30 minutes until golden brown." oninput="app.updatePreview()"></text
             },
 
             async formatWithAI() {
-                this.showProcessing('Formatting recipe to Ferguson standard...');
+                this.showProcessing('Formatting recipe with AI (validating embedded ingredients)...');
 
                 try {
-                    const response = await fetch(`${this.apiUrl}/format-recipe`, {
+                    // Get contributor_id from selected contributor name
+                    let contributorId = null;
+                    if (this.selectedContributor) {
+                        // Map contributor name to ID (1=Fergi, 2=Janet, etc.)
+                        const contributorMap = {
+                            'Fergi': 1,
+                            'Janet': 2,
+                            'Nancy': 3,
+                            'Lauren': 4,
+                            'The Cooks': 5
+                        };
+                        contributorId = contributorMap[this.selectedContributor] || null;
+                    }
+
+                    // Use new parse-recipe endpoint with enhanced recipe-parser library
+                    const response = await fetch(`${this.apiUrl}/parse-recipe`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            text: this.rawRecipeText,
-                            contributor: this.selectedContributor,
-                            original_filename: this.selectedFile?.name
+                            extractedText: this.rawRecipeText,
+                            filename: this.selectedFile?.name || '',
+                            contributorId: contributorId
                         })
                     });
 
@@ -892,10 +907,24 @@ Bake for 25-30 minutes until golden brown." oninput="app.updatePreview()"></text
 
                     if (data.success) {
                         this.formattedRecipe = data.recipe;
+
+                        // Show validation warnings if recipe needs review
+                        if (data.recipe.needs_review && data.validation?.issues?.length > 0) {
+                            const issueCount = data.validation.issues.length;
+                            console.warn(`⚠️ Recipe validation: ${issueCount} instruction(s) may lack embedded ingredient quantities`);
+                            console.table(data.validation.issues);
+                        }
+
                         this.populateEditForm();
                         this.updatePreview();
                         this.hideProcessing();
                         this.goToStep(4);
+
+                        // Notify user if recipe needs review
+                        if (data.recipe.needs_review) {
+                            const message = `Recipe extracted successfully!\n\n⚠️ Note: Some cooking steps may need ingredient quantities added.\nPlease review the instructions before saving.`;
+                            setTimeout(() => alert(message), 500);
+                        }
                     } else {
                         throw new Error(data.error || 'Failed to format recipe');
                     }

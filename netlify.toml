@@ -96,6 +96,11 @@
   to = "/.netlify/functions/format-recipe"
   status = 200
 
+[[redirects]]
+  from = "/api/parse-recipe"
+  to = "/.netlify/functions/parse-recipe"
+  status = 200
+
 # SPA fallback - serve index.html for all other routes (except files)
 # This ensures JSON, HTML, JS, CSS files are served correctly
 [[redirects]]
