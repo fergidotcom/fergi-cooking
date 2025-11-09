@@ -12,10 +12,50 @@ This file provides guidance to Claude Code (claude.ai/code) when working with th
 
 **Project Location:** `/Users/joeferguson/Library/CloudStorage/Dropbox/Fergi/Cooking`
 **Created:** October 30, 2025
-**Status:** ✓ Production - Deployed to Netlify (v4.0.0)
+**Status:** ✓ Production - Deployed to Netlify (v4.3.0)
 **Live URL:** https://fergi-cooking.netlify.app
 **Cooking Mode:** https://fergi-cooking.netlify.app/cooking.html?recipe_id=5
-**Purpose:** Organize and manage recipe collection, create searchable recipe database, document family recipes, manage cooking events with guest preferences, import recipes with AI formatting, manage contributors, mobile cooking mode for Janet
+**Purpose:** Organize and manage recipe collection, create searchable recipe database, document family recipes, manage cooking events with guest preferences, import recipes with AI formatting, manage contributors, mobile cooking mode for Janet, **offline recipe browsing**
+
+## 🆕 Recent Updates - November 8, 2025
+
+**v4.3.0 - Enhanced Mobile UI/UX (Nov 8):**
+- ✅ Comprehensive mobile-first CSS improvements (~160 lines added)
+- ✅ Fixed navigation wrapping and spacing on small screens
+- ✅ All touch targets minimum 44px for accessibility
+- ✅ Form inputs 16px font-size to prevent iOS zoom
+- ✅ Full-screen modals on mobile with better scrolling
+- ✅ Fixed connection status bar at top of screen on mobile
+- ✅ Improved typography scaling for mobile reading
+- ✅ Better tap highlighting and touch feedback
+- ✅ Recipe cards, buttons, forms optimized for iPhone
+
+**v4.2.1 - BUGFIX: Recipe Display (Nov 8):**
+- ✅ Fixed "No ingredients listed" and "No instructions provided" bug
+- ✅ Issue: Database uses `recipe_id` but code looked for `id`
+- ✅ Updated `showRecipeDetail()` to handle both field names
+- ✅ Normalized recipe objects for consistent `id` field
+- ✅ All 128 recipes now display ingredients and instructions correctly
+
+**v4.2.0 - MAJOR: Offline Support System (Nov 8):**
+- ✅ NEW: `offline-manager.js` - Centralized offline detection and caching
+- ✅ Automatic online/offline detection with visual indicators
+- ✅ Recipes cached to localStorage when online (24-hour expiry)
+- ✅ Seamless offline browsing from cached data
+- ✅ CRUD operations disabled when offline (buttons grayed out)
+- ✅ Green "Online" / Red "Offline - Read Only" status indicator
+- ✅ Notifications show cache age when viewing offline
+- ✅ Works on index.html and cooking.html
+
+**v4.1.0 - MAJOR: Claude Vision API Integration (Nov 8):**
+- ✅ Replaced Tesseract.js OCR with Claude Vision API
+- ✅ Can now read handwritten recipes, rotated images, decorative cards
+- ✅ Successfully re-extracted **11 out of 13** failed Janet recipes (85% success!)
+- ✅ New recipes: Pizza Dough, Beef Stroganoff, Baby Back Ribs, Rice Pilaf, Bean Bake, and 6 others
+- ✅ All extracted recipes assigned to contributor "Janet"
+- ✅ Vision API integrated into Add Recipe workflow
+- ✅ Model: `claude-sonnet-4-20250514` with 4096 max tokens
+- ✅ Total recipes increased from 122 → 128
 
 ## 🆕 Recent Updates - November 7, 2025
 
@@ -372,19 +412,22 @@ The recipe collection represents years of accumulated cooking knowledge and fami
 
 ---
 
-**Last Updated:** November 7, 2025
-**Version:** v4.0.0
+**Last Updated:** November 8, 2025
+**Version:** v4.3.0
 **Status:** ✓ Production - Live at https://fergi-cooking.netlify.app
-**Database:** 122 recipes (89 Janet, 33 Fergi, 23 need review) | **19 Netlify Functions** | **All APIs Working** | **Mobile-First Design**
+**Database:** 128 recipes (89 Janet, 33 Fergi, 6 others, 81 need review) | **21 Netlify Functions** | **All APIs Working** | **Mobile-First Design** | **Offline Support**
 
 **Core Features:**
-- Recipe browsing, search, and filtering
+- Recipe browsing, search, and filtering (works offline!)
+- **NEW: Offline recipe browsing with localStorage caching**
+- **NEW: CRUD restricted to online-only (Read works offline)**
+- **NEW: Claude Vision API for handwritten recipe extraction**
 - Contributor management (public, no authentication)
 - Contributor filter dropdown and statistics
-- **NEW: Recipe import wizard (4-step process)**
-- **NEW: File upload support (PDF, Word, Images with OCR, Text)**
-- **NEW: AI-powered recipe formatting (Claude API)**
-- **NEW: Beautiful two-column print layout**
+- Recipe import wizard (4-step process with Vision API)
+- File upload support (PDF, Word, Images with Vision, Text)
+- AI-powered recipe formatting (Claude API)
+- Beautiful two-column print layout
 - Janet's Cookbook (89 recipes, properly assigned to Janet contributor)
 - Event creation and management
 - Recipe-to-event assignment
@@ -395,4 +438,10 @@ The recipe collection represents years of accumulated cooking knowledge and fami
 - Public guest responses without login
 - Dietary restrictions and own dish tracking
 - Context-aware response UI (prefer vs. will_bring)
+- Mobile cooking mode with Wake Lock (keeps screen on)
 - Single database architecture (recipes.json in Dropbox, shared with Reference Refinement)
+
+**New Files (v4.1-4.3):**
+- `offline-manager.js` - Offline detection and caching system
+- `re-extract-janet-vision.js` - Vision-based recipe re-extraction script
+- `.env.local` - Local environment variables (ANTHROPIC_API_KEY)
